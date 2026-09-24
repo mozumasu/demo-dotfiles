@@ -10,13 +10,11 @@
     darwinConfigurations.arabica = darwin.lib.darwinSystem {
       system = "aarch64-darwin";
       modules = [
+	./darwin/system.nix
         {
-	  system.stateVersion = 5;
           nix.settings.experimental-features = "nix-command flakes";
           system.primaryUser = "mozumasu";
           users.users."mozumasu".home = "/Users/mozumasu";
-	  system.keyboard.enableKeyMapping = true;
-	  system.keyboard.remapCapsLockToControl = true;
         }
       ];
     };
