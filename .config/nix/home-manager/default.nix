@@ -1,6 +1,9 @@
 { config, pkgs, ... }:
 {
-  imports = [ ./aerospace.nix ];
+  imports = [
+    ./aerospace.nix
+    ./git.nix
+  ];
   home.username = "mozumasu";
   home.homeDirectory = "/Users/mozumasu";
   home.stateVersion = "24.11";
