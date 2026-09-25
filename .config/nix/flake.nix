@@ -7,16 +7,25 @@
     darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    treefmt-nix.url = "github:numtide/treefmt-nix";
+    treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
   outputs =
     {
       nixpkgs,
       darwin,
       home-manager,
+      treefmt-nix,
       ...
     }:
+    let
+      pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+      treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
+    in
     {
-      formatter.aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.nixfmt-tree;
+      # nix fmt / nix run .#formatterの実体
+      formatter.aarch64-darwin = treefmtEval.config.build.wrapper;
+      checks.aarch64-darwin.formatting = treefmtEval.config.build.check ./.;
       darwinConfigurations.arabica = darwin.lib.darwinSystem {
         system = "aarch64-darwin";
         modules = [
