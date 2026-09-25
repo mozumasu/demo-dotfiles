@@ -7,6 +7,7 @@
     darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -15,6 +16,7 @@
       nixpkgs,
       darwin,
       home-manager,
+      nix-homebrew,
       treefmt-nix,
       ...
     }:
@@ -42,6 +44,15 @@
               useUserPackages = true;
               backupFileExtension = "backup";
               users."mozumasu" = import ./home-manager;
+            };
+          }
+          ./darwin/homebrew.nix
+          nix-homebrew.darwinModules.nix-homebrew
+          {
+            nix-homebrew = {
+              enable = true;
+              user = "mozumasu";
+              autoMigrate = true;
             };
           }
         ];
