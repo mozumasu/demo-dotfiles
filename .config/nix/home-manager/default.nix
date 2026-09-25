@@ -20,5 +20,8 @@
     lazygit
     # Docker
     lazydocker
+    # Nix (フォーマッタと LSP。CLI と Neovim で同じバイナリを使うため Mason ではなく nix で入れる)
+    nixfmt
+    nixd
   ];
 }
