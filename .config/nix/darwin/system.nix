@@ -2,6 +2,11 @@
 {
   system.stateVersion = 5;
 
+  # sudo を Touch ID で通す (/etc/pam.d/sudo_local に pam_tid.so を書く)
+  security.pam.services.sudo_local.touchIdAuth = true;
+  # tmux / screen / zellij などサーバー型マルチプレクサの中でも Touch ID を効かせる (pam_reattach)
+  security.pam.services.sudo_local.reattach = true;
+
   # caps lock → control
   system.keyboard = {
     enableKeyMapping = true;
