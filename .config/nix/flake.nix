@@ -16,6 +16,7 @@
       ...
     }:
     {
+      formatter.aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.nixfmt-tree;
       darwinConfigurations.arabica = darwin.lib.darwinSystem {
         system = "aarch64-darwin";
         modules = [
