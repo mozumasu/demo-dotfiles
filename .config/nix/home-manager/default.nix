@@ -1,4 +1,9 @@
-{ config, pkgs, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   imports = [
     ./aerospace.nix
@@ -23,6 +28,15 @@
   };
   xdg.configFile."nvim".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/nvim";
+
+  home.activation.macSKKDictionaries = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    DICT_DIR="$HOME/Library/Containers/net.mtgto.inputmethod.macSKK/Data/Documents/Dictionaries"
+    mkdir -p "$DICT_DIR"
+    cp -f "${pkgs.skkDictionaries.l}/share/skk/SKK-JISYO.L" "$DICT_DIR/"
+    cp -f "${pkgs.skkDictionaries.jinmei}/share/skk/SKK-JISYO.jinmei" "$DICT_DIR/"
+    cp -f "${pkgs.skkDictionaries.emoji}/share/skk/SKK-JISYO.emoji" "$DICT_DIR/"
+    chmod 644 "$DICT_DIR"/SKK-JISYO.*
+  '';
 
   home.packages = with pkgs; [
     # 最低限
