@@ -54,5 +54,7 @@
     # Nix (フォーマッタと LSP。CLI と Neovim で同じバイナリを使うため Mason ではなく nix で入れる)
     nixfmt
     nixd
+    llm-agents.claude-code
+    llm-agents.codex
   ];
 }

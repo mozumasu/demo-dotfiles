@@ -10,6 +10,7 @@
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+    llm-agents.url = "github:numtide/llm-agents.nix";
   };
   outputs =
     {
@@ -18,6 +19,7 @@
       home-manager,
       nix-homebrew,
       treefmt-nix,
+      llm-agents,
       ...
     }:
     let
@@ -36,6 +38,10 @@
             nix.settings.experimental-features = "nix-command flakes";
             system.primaryUser = "mozumasu";
             users.users."mozumasu".home = "/Users/mozumasu";
+
+            nixpkgs.overlays = [
+              llm-agents.overlays.shared-nixpkgs
+            ];
           }
           home-manager.darwinModules.home-manager
           {
