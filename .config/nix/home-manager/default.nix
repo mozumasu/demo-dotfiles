@@ -41,6 +41,9 @@
   # ~/.config/herdr にはソケットやログ、セッション状態も置かれるので設定ファイルだけリンクする
   xdg.configFile."herdr/config.toml".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/herdr/config.toml";
+  # nb は ~/.nbrc 固定で読むのでホーム直下にリンクする
+  home.file.".nbrc".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/nb/nbrc";
   # ZDOTDIR (~/.config/zsh) には .zcompdump などのキャッシュも置かれるのでファイル単位でリンクする
   xdg.configFile."zsh/.zshrc".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/zsh/.zshrc";
