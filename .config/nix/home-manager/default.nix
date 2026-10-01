@@ -35,6 +35,9 @@
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/wezterm";
   xdg.configFile."ccsession".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/ccsession";
+  # 認証情報 (credentials.json / token.json) をリポジトリに入れないよう設定ファイルだけリンクする
+  xdg.configFile."gmailctl/config.jsonnet".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/gmailctl/config.jsonnet";
   # ~/.config/herdr にはソケットやログ、セッション状態も置かれるので設定ファイルだけリンクする
   xdg.configFile."herdr/config.toml".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/herdr/config.toml";
@@ -67,6 +70,15 @@
     llm-agents.claude-code
     llm-agents.codex
     nb
+    # Gmail フィルタをコードで管理。設定ディレクトリが ~/.gmailctl 固定なので --config で XDG に寄せる
+    (symlinkJoin {
+      name = "gmailctl";
+      paths = [ gmailctl ];
+      nativeBuildInputs = [ makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/gmailctl --add-flags "--config ${config.xdg.configHome}/gmailctl"
+      '';
+    })
     ccsession.packages.${pkgs.system}.default
   ];
 }
