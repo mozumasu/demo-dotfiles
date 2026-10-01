@@ -69,6 +69,7 @@
     nixd
     llm-agents.claude-code
     llm-agents.codex
+    llm-agents.pi
     nb
     # Gmail フィルタをコードで管理。設定ディレクトリが ~/.gmailctl 固定なので --config で XDG に寄せる
     (symlinkJoin {
