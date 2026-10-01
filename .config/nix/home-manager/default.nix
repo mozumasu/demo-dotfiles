@@ -2,6 +2,7 @@
   config,
   pkgs,
   lib,
+  ccsession,
   ...
 }:
 {
@@ -32,6 +33,8 @@
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/karabiner";
   xdg.configFile."wezterm".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/wezterm";
+  xdg.configFile."ccsession".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/ccsession";
 
   home.activation.macSKKDictionaries = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     DICT_DIR="$HOME/Library/Containers/net.mtgto.inputmethod.macSKK/Data/Documents/Dictionaries"
@@ -60,5 +63,6 @@
     nixd
     llm-agents.claude-code
     llm-agents.codex
+    ccsession.packages.${pkgs.system}.default
   ];
 }

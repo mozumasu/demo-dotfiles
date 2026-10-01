@@ -11,6 +11,7 @@
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     llm-agents.url = "github:numtide/llm-agents.nix";
+    ccsession.url = "github:sorafujitani/ccsession";
   };
   outputs =
     {
@@ -20,6 +21,7 @@
       nix-homebrew,
       treefmt-nix,
       llm-agents,
+      ccsession,
       ...
     }:
     let
@@ -49,6 +51,7 @@
               useGlobalPkgs = true;
               useUserPackages = true;
               backupFileExtension = "backup";
+              extraSpecialArgs = { inherit ccsession; };
               users."mozumasu" = import ./home-manager;
             };
           }
