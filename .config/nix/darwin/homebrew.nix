@@ -32,6 +32,7 @@
       # フォント (Nerd Font 入り。Neovim / ターミナルのアイコン表示に必要)
       "font-hackgen"
       "font-hackgen-nerd"
+      "betterdisplay"
     ];
   };
 }
