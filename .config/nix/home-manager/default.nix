@@ -41,6 +41,12 @@
   # ~/.config/herdr にはソケットやログ、セッション状態も置かれるので設定ファイルだけリンクする
   xdg.configFile."herdr/config.toml".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/herdr/config.toml";
+  # ZDOTDIR (~/.config/zsh) には .zcompdump などのキャッシュも置かれるのでファイル単位でリンクする
+  xdg.configFile."zsh/.zshrc".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/zsh/.zshrc";
+  # zsh の autoload 関数 (ファイル名 = 関数名)
+  xdg.configFile."zsh/functions".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/zsh/functions";
 
   home.activation.macSKKDictionaries = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     DICT_DIR="$HOME/Library/Containers/net.mtgto.inputmethod.macSKK/Data/Documents/Dictionaries"
