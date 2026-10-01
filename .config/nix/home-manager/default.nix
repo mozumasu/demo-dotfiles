@@ -28,6 +28,8 @@
   };
   xdg.configFile."nvim".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/nvim";
+  xdg.configFile."karabiner".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/karabiner";
 
   home.activation.macSKKDictionaries = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     DICT_DIR="$HOME/Library/Containers/net.mtgto.inputmethod.macSKK/Data/Documents/Dictionaries"
