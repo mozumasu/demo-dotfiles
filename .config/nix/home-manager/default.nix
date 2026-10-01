@@ -35,6 +35,9 @@
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/wezterm";
   xdg.configFile."ccsession".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/ccsession";
+  # ~/.config/herdr にはソケットやログ、セッション状態も置かれるので設定ファイルだけリンクする
+  xdg.configFile."herdr/config.toml".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/herdr/config.toml";
 
   home.activation.macSKKDictionaries = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     DICT_DIR="$HOME/Library/Containers/net.mtgto.inputmethod.macSKK/Data/Documents/Dictionaries"

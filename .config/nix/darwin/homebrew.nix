@@ -16,6 +16,7 @@
     brews = [
       "colima"
       "sheldon"
+      "herdr"
     ];
     casks = [
       "homerow"

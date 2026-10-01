@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# フォーカス中のペインから「直前のコマンド行 + その出力」をクリップボードにコピーする。
+# zsh のプロンプト末尾 "❯" (~/.config/zsh/.zshrc) を区切りとして判定する。
+# 引数でペイン ID を渡すとそのペインを対象にする (動作確認用)。
+set -euo pipefail
+
+PROMPT_MARK='❯'
+LINES=${HERDR_COPY_LINES:-3000}
+
+notify() {
+  herdr notification show "$1" ${2:+--body "$2"} --sound none >/dev/null 2>&1 || true
+}
+
+# keys.command の shell はバックグラウンド実行なので、UI でフォーカス中のペインを対象にする
+pane_id=${1:-$(herdr pane current | jq -r '.result.pane.pane_id')}
+
+output=$(herdr pane read "$pane_id" --source recent-unwrapped --lines "$LINES" | awk -v mark="$PROMPT_MARK" '
+  # read 時に行末の空白が削られるので、行末に空白を足してから "❯ " を探す
+  function prompt_cmd(s,   p) {
+    p = index(s " ", mark " ")
+    if (!p) return ""
+    s = substr(s " ", p + length(mark " "))
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", s)
+    return s == "" ? " " : s
+  }
+  { line[NR] = $0 }
+  END {
+    n = NR
+    while (n > 0 && line[n] ~ /^[[:space:]]*$/) n--
+    # 後ろから見て、コマンドが空でない最初のプロンプト行を開始位置にする
+    end = n
+    for (i = n; i > 0; i--) {
+      c = prompt_cmd(line[i])
+      if (c == "") continue
+      if (c != " ") { start = i; break }
+      end = i - 1
+    }
+    if (!start) exit 1
+    while (end > start && line[end] ~ /^[[:space:]]*$/) end--
+    for (i = start; i <= end; i++) print line[i]
+  }
+') || { notify "Copy failed" "直前のコマンドが見つかりません"; exit 1; }
+
+printf '%s' "$output" | pbcopy
+notify "Copied last output" "$(printf '%s\n' "$output" | wc -l | tr -d ' ') lines"

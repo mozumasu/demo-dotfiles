@@ -14,6 +14,8 @@ config.leader = { key = ";", mods = "CTRL", timeout_milliseconds = 1000 }
 config.keys = {
 	{ key = "r", mods = "LEADER", action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
 	{ key = "d", mods = "LEADER", action = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }) },
+	-- IME 経由だと C-q の 1 回目が消えるので、herdr の prefix 用に ^Q を直接送る
+	{ key = "q", mods = "CTRL", action = wezterm.action.SendString("\x11") },
 }
 
 -- OSのIME経由でキー入力を処理する

@@ -1,0 +1,158 @@
+onboarding = false
+
+[theme]
+name = "solarized"
+auto_switch = false
+
+[theme.custom]
+panel_bg = "reset"
+# accent = "#f5c2e7"
+red = "#ff6188"
+green = "#a6e3a1"
+
+[terminal]
+default_shell = "" # Empty means $SHELL, then /bin/sh.
+shell_mode = "auto"
+new_cwd = "follow"
+
+[update]
+channel = "stable" # For Nix management
+version_check = false # For Nix management
+manifest_check = true # Keep only agent detection rules up-to-date
+
+[keys]
+prefix = "ctrl+q"
+help = "prefix+?"
+settings = "prefix+s"
+detach = "prefix+q"
+reload_config = ""
+open_notification_target = "prefix+o"
+
+# workspace
+workspace_picker = "prefix+w"
+goto = "prefix+g"
+new_workspace = "prefix+shift+n" # default prefix+shift+n
+rename_workspace = "prefix+shift+r"
+close_workspace = "prefix+shift+d"
+previous_workspace = "prefix+p"
+next_workspace = "prefix+n"
+switch_workspace = ""   # optional indexed binding, e.g. "prefix+shift+1..9"
+
+# worktree
+new_worktree = "prefix+shift+g"
+open_worktree = ""    # optional, unset by default
+remove_worktree = ""  # optional, unset by default; opens confirmation
+
+# agent
+previous_agent = "cmd+ctrl+p"     # optional, unset by default
+next_agent = "cmd+ctrl+n"         # optional, unset by default
+focus_agent = ""        # optional indexed binding, e.g. "prefix+alt+1..9"
+
+remote_image_paste = "ctrl+v" # only active in herdr --remote; empty disables raw-key image paste
+
+# tab
+new_tab = "cmd+t"
+rename_tab = "prefix+shift+t"
+previous_tab = "ctrl+shift+tab"
+next_tab = "ctrl+tab"
+switch_tab = "cmd+1..9"
+close_tab = "prefix+shift+x"
+
+
+# Pane
+rename_pane = "prefix+shift+p"
+edit_scrollback = "prefix+e"
+focus_pane_left = "shift+backspace"
+focus_pane_down = "ctrl+shift+j"
+focus_pane_up = "ctrl+shift+k"
+focus_pane_right = "ctrl+shift+l"
+cycle_pane_next = "" # prefix+tab
+cycle_pane_previous = "" # prefix+shift+tab
+last_pane = "prefix+tab"          # optional, unset by default; bind e.g. "prefix+tab" for global back-and-forth
+split_vertical = "prefix+r"
+split_horizontal = "prefix+d"
+close_pane = "prefix+x"
+zoom = "ctrl+shift+z"
+resize_mode = "" # default prefix+r
+
+toggle_sidebar = "prefix+b"
+
+# Navigate-mode
+navigate_workspace_up = "ctrl+p"
+navigate_workspace_down = "ctrl+n"
+navigate_pane_left = "h"
+navigate_pane_down = "j"
+navigate_pane_up = "k"
+navigate_pane_right = "l"
+
+# Copy the previous command line + output of the focused pane to the clipboard
+[[keys.command]]
+key = "prefix+y"
+type = "shell"
+command = "$HOME/dotfiles/.config/herdr/bin/herdr-copy-last-output"
+
+[[keys.command]]
+key = "prefix+shift+l"
+type = "pane"
+command = "lazygit"
+
+[[keys.command]]
+key = "prefix+shift+v"
+type = "pane"
+command = "nvim"
+
+# [worktrees]
+# directory = "~/.herdr/worktrees"
+
+[ui]
+# Sidebar width (auto-scaled based on workspace names, this sets the default)
+sidebar_width = 26
+sidebar_min_width = 18
+sidebar_max_width = 36
+mobile_width_threshold = 64
+mouse_capture = true
+right_click_passthrough_modifier = ""
+redraw_on_focus_gained = true
+mouse_scroll_lines = 3
+confirm_close = true
+prompt_new_tab_name = true
+pane_borders = true
+pane_gaps = false
+show_agent_labels_on_pane_borders = true
+agent_panel_sort = "spaces"
+accent = "cyan"
+
+[ui.toast]
+delay_seconds = 1
+delivery = "herdr"
+
+[ui.toast.herdr]
+position = "bottom-right"
+
+[ui.toast.clipboard]
+enabled = true
+position = "bottom-center"
+
+[ui.sound]
+enabled = true
+
+[ui.sound.agents]
+droid = "off" # By default, droid is muted.
+
+[session]
+resume_agents_on_restore = true
+
+[remote]
+manage_ssh_config = true
+
+[experimental]
+allow_nested = false
+kitty_graphics = true
+pane_history = true
+switch_ascii_input_source_in_prefix = true # default false
+reveal_hidden_cursor_for_cjk_ime = false
+cjk_ime_agents = []
+cjk_ime_cursor_shape = "steady_block" # Values: block, steady_block (default), underline, steady_underline, bar, steady_bar.
+
+[advanced]
+scrollback_limit_bytes = 10000000
