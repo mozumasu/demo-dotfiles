@@ -7,6 +7,15 @@ local config = wezterm.config_builder()
 -- 設定ファイルの変更を自動で読み込む
 config.automatically_reload_config = true
 
+-- Leaderキーを C-; に設定
+config.leader = { key = ";", mods = "CTRL", timeout_milliseconds = 1000 }
+
+-- ペイン分割 (leader r: 右に分割, leader d: 下に分割)
+config.keys = {
+	{ key = "r", mods = "LEADER", action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
+	{ key = "d", mods = "LEADER", action = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }) },
+}
+
 -- OSのIME経由でキー入力を処理する
 config.use_ime = true
 
