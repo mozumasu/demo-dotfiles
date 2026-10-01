@@ -17,3 +17,15 @@ PROMPT+='%(?.%F{green}.%F{red})❯%f '
 autoload -Uz copy-earlier-word
 zle -N copy-earlier-word
 bindkey '^[,' copy-earlier-word
+
+# C-g で ghq 管理のリポジトリを fzf で選んで移動する
+function ghq-fzf() {
+  local src=$(ghq list | fzf --preview "bat --color=always --style=header,grid --line-range :80 $(ghq root)/{}/README.*")
+  if [ -n "$src" ]; then
+    BUFFER="cd $(ghq root)/$src"
+    zle accept-line
+  fi
+  zle -R -c
+}
+zle -N ghq-fzf
+bindkey '^g' ghq-fzf
