@@ -22,6 +22,8 @@ local RIGHT_CIRCLE = wezterm.nerdfonts.ple_right_half_circle_thick
 -- メイン処理
 -- -----------------------------------------------------------------------------
 function module.apply_to_config(config)
+	-- タイトルバーを非表示
+	config.window_decorations = "RESIZE"
 	-- タブバー自体の設定
 	config.use_fancy_tab_bar = false -- レトロスタイル（フォント設定が効く）
 	config.tab_bar_at_bottom = true -- タブバーを下に表示
