@@ -63,6 +63,7 @@
     nixd
     llm-agents.claude-code
     llm-agents.codex
+    nb
     ccsession.packages.${pkgs.system}.default
   ];
 }
