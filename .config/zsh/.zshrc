@@ -51,3 +51,8 @@ fi
 if [[ -r "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]]; then
   source "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
 fi
+
+# direnv: ディレクトリの .envrc を読み込む (`use flake` で flake.nix の devShell に入る)
+if (( $+commands[direnv] )); then
+  eval "$(direnv hook zsh)"
+fi

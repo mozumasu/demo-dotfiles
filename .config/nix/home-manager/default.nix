@@ -28,6 +28,13 @@
       UseKeychain = "yes";
     };
   };
+  # プロジェクトの .envrc に `use flake` と書くと cd 時に flake.nix の devShell に入る
+  # nix-direnv は devShell をキャッシュして毎回の評価を省き、GC で消されないよう GC root も張る
+  # .zshrc は programs.zsh で管理していないので、フックは .zshrc に直接書く
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
+  };
   # ログイン時にキーチェーンのパスフレーズで鍵を ssh-agent に載せる
   # AddKeysToAgent は ssh 接続時しか効かず、コミット署名 (ssh-keygen -Y sign) だけだと毎回パスフレーズを聞かれるため
   # 事前に一度 `/usr/bin/ssh-add --apple-use-keychain ~/.ssh/id_ed25519` でキーチェーンに登録しておく
