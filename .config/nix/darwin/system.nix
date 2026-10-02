@@ -57,6 +57,29 @@
     ".GlobalPreferences"."com.apple.mouse.scaling" = 5.0;
     # Finder に「終了」(Cmd+Q) を追加する。終了すれば Cmd+Tab に常駐しなくなる
     finder.QuitMenuItem = true;
+    # 拡張子を常に表示
+    finder.AppleShowAllExtensions = true;
+    # 隠しファイル (.git など) を表示
+    finder.AppleShowAllFiles = true;
+    # 下部にパスバー
+    finder.ShowPathbar = true;
+    # 下部にステータスバー
+    finder.ShowStatusBar = true;
+    # ウィンドウタイトルにフルパスを表示 (パスを入力して移動したいときは Cmd+Shift+G)
+    finder._FXShowPosixPathInTitle = true;
+    # リスト表示を既定に
+    finder.FXPreferredViewStyle = "Nlsv";
+    # フォルダを先頭に並べる
+    finder._FXSortFoldersFirst = true;
+    # 検索範囲を今のフォルダに (Mac 全体は検索バーの「このMac」か Raycast で)
+    finder.FXDefaultSearchScope = "SCcf";
+    # 拡張子を変えたときの警告を出さない
+    finder.FXEnableExtensionChangeWarning = false;
+    # ネットワークドライブや USB に .DS_Store を作らない
+    CustomUserPreferences."com.apple.desktopservices" = {
+      DSDontWriteNetworkStores = true;
+      DSDontWriteUSBStores = true;
+    };
     # スクリーンショットの保存先 (ファイル保存を選んだとき用。フォルダがないとデスクトップに保存される)
     screencapture.location = "~/Pictures/Screenshots";
     screencapture.type = "png";
