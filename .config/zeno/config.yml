@@ -12,3 +12,35 @@ snippets:
   - name: lazygit
     keyword: lg
     snippet: lazygit
+  - name: claude
+    keyword: c
+    snippet: claude
+  - name: claude continue
+    keyword: cc
+    snippet: claude --continue
+  - name: claude resume
+    keyword: r
+    snippet: --resume
+    context:
+      lbuffer: '^claude\s+'
+
+completions:
+  # Tab (zeno-completion) で fzf から選ぶ補完
+  # 自分と所属 org のリポジトリ
+  - name: gh repo
+    patterns:
+      - "^gh( .*)? (--repo|-R) $"
+    sourceCommand: "{ gh repo list --limit 1000 --json nameWithOwner -q '.[].nameWithOwner'; gh org list | xargs -P4 -I{} gh repo list {} --limit 1000 --json nameWithOwner -q '.[].nameWithOwner'; } 2>/dev/null"
+    options:
+      --prompt: "'Repo> '"
+  # 行内の --repo / -R のリポジトリ (なければカレントのリポジトリ) の workflow
+  - name: gh workflow
+    patterns:
+      - "^gh workflow (run|view|enable|disable)( .*)? $"
+    excludePatterns:
+      - " (--repo|-R|--ref|-r|--field|-f|--raw-field|-F) $"
+    sourceCommand: "repo=$(print -r -- $BUFFER | sed -nE 's/.*(--repo|-R)[ =]([^ ]+).*/\\2/p'); gh workflow list ${repo:+--repo=$repo} --json name -q '.[].name' 2>/dev/null"
+    options:
+      --prompt: "'Workflow> '"
+    # 空白を含む workflow 名はクォートする
+    callback: "sed -E 's/^(.* .*)$/\"\\1\"/'"
