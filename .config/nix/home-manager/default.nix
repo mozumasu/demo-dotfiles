@@ -66,6 +66,9 @@
     zoxide
     neovim
     ripgrep
+    # treesitter パーサーのビルド用 (Xcode CLT なしで使える C コンパイラ)
+    clang
+    tree-sitter
     # バージョン管理
     git
     gh
