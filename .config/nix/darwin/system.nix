@@ -34,6 +34,18 @@
     dock.autohide-delay = 0.0;
     # 表示アニメーションの長さ (秒)。0 でアニメーションなし
     dock.autohide-time-modifier = 0.0;
+    # Dock に「最近使ったアプリ」欄を表示する
+    dock.show-recents = true;
+    # 使用状況で Spaces を並べ替えない (AeroSpace でワークスペースの位置がずれないように)
+    dock.mru-spaces = false;
+    # Mission Control でウィンドウをアプリごとにまとめる (AeroSpace が隅に隠したウィンドウで小さく散らばるのを防ぐ)
+    dock.expose-group-apps = true;
+    # 「ディスプレイごとに個別の操作スペース」をオフ (AeroSpace 推奨。反映には再ログインが必要)
+    spaces.spans-displays = true;
+    # ステージマネージャをオフ (AeroSpace とウィンドウ配置を取り合わないように)
+    WindowManager.GloballyEnabled = false;
+    # ダウンロードしたアプリを初めて開くときの「開いてもよいですか」を出さない
+    LaunchServices.LSQuarantine = false;
     # タップでクリック
     trackpad.Clicking = true;
     # ダブルタップして指を離さずにドラッグ (タップでドラッグ)
