@@ -3,6 +3,7 @@
   pkgs,
   lib,
   ccsession,
+  zeno,
   ...
 }:
 {
@@ -41,6 +42,8 @@
   # ~/.config/herdr にはソケットやログ、セッション状態も置かれるので設定ファイルだけリンクする
   xdg.configFile."herdr/config.toml".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/herdr/config.toml";
+  xdg.configFile."zeno".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/zeno";
   # nb は ~/.nbrc 固定で読むのでホーム直下にリンクする
   home.file.".nbrc".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/nb/nbrc";
@@ -60,12 +63,27 @@
     chmod 644 "$DICT_DIR"/SKK-JISYO.*
   '';
 
+  # zeno.zsh は起動時に自分のディレクトリへ node_modules を作るので、読み取り専用の
+  # nix store ではなく書き込める ~/.local/share/zsh/plugins/zeno にコピーして使う
+  home.activation.zeno = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    ZENO_DIR="${config.xdg.dataHome}/zsh/plugins/zeno"
+    if [ "$(cat "$ZENO_DIR/.nix-source" 2>/dev/null)" != "${zeno}" ]; then
+      rm -rf "$ZENO_DIR"
+      mkdir -p "$(dirname "$ZENO_DIR")"
+      cp -R "${zeno}" "$ZENO_DIR"
+      chmod -R u+w "$ZENO_DIR"
+      echo "${zeno}" > "$ZENO_DIR/.nix-source"
+    fi
+  '';
+
   home.packages = with pkgs; [
     # 最低限
     fzf
     zoxide
     neovim
     ripgrep
+    # zeno.zsh の実行に必要
+    deno
     # treesitter パーサーのビルド用 (Xcode CLT なしで使える C コンパイラ)
     clang
     tree-sitter

@@ -32,3 +32,17 @@ bindkey '^g' ghq-fzf
 
 # z でよく行くディレクトリに移動する (zi で fzf から選ぶ)
 eval "$(zoxide init zsh)"
+
+# zeno.zsh: abbrev スニペット展開と fzf 補完 (設定は ~/.config/zeno/config.yml)
+export ZENO_HOME="$HOME/.config/zeno"
+if [[ -r "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins/zeno/zeno.zsh" ]]; then
+  source "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins/zeno/zeno.zsh"
+fi
+if [[ -n $ZENO_LOADED ]]; then
+  bindkey ' ' zeno-auto-snippet
+  bindkey '^m' zeno-auto-snippet-and-accept-line
+  bindkey '^i' zeno-completion
+  bindkey '^x ' zeno-insert-space
+  bindkey '^xx' zeno-insert-snippet
+  bindkey '^r' zeno-history-selection
+fi

@@ -12,6 +12,11 @@
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     llm-agents.url = "github:numtide/llm-agents.nix";
     ccsession.url = "github:sorafujitani/ccsession";
+    # zsh の abbrev / fzf 補完プラグイン。flake ではないのでソースだけ取り込む
+    zeno = {
+      url = "github:yuki-yano/zeno.zsh";
+      flake = false;
+    };
   };
   outputs =
     {
@@ -22,6 +27,7 @@
       treefmt-nix,
       llm-agents,
       ccsession,
+      zeno,
       ...
     }:
     let
@@ -51,7 +57,7 @@
               useGlobalPkgs = true;
               useUserPackages = true;
               backupFileExtension = "backup";
-              extraSpecialArgs = { inherit ccsession; };
+              extraSpecialArgs = { inherit ccsession zeno; };
               users."mozumasu" = import ./home-manager;
             };
           }

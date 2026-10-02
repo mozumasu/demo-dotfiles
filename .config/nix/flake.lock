@@ -242,7 +242,8 @@
         "llm-agents": "llm-agents",
         "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs_3",
-        "treefmt-nix": "treefmt-nix_2"
+        "treefmt-nix": "treefmt-nix_2",
+        "zeno": "zeno"
       }
     },
     "systems": {
@@ -313,6 +314,22 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "zeno": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1788162925,
+        "narHash": "sha256-sCZjmx13YjdUVJeG/OZ/O5hx34k5mo1enDS7smUv1K8=",
+        "owner": "yuki-yano",
+        "repo": "zeno.zsh",
+        "rev": "490121876701f472e7596b606048a7e1b73b5b03",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yuki-yano",
+        "repo": "zeno.zsh",
         "type": "github"
       }
     }

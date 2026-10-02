@@ -1,0 +1,14 @@
+snippets:
+  # スペースか Enter で展開される abbrev
+  - name: git status
+    keyword: gs
+    snippet: git status --short --branch
+  - name: git diff
+    keyword: gd
+    snippet: git diff
+  - name: git commit
+    keyword: gc
+    snippet: git commit
+  - name: lazygit
+    keyword: lg
+    snippet: lazygit
