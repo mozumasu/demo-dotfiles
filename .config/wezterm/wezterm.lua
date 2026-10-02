@@ -50,6 +50,7 @@ config.window_background_opacity = 0.75
 config.macos_window_background_blur = 20
 
 require("tab").apply_to_config(config)
+require("workspace").apply_to_config(config)
 
 -- 最後に、weztermに設定を戻す
 return config
