@@ -28,6 +28,19 @@
       UseKeychain = "yes";
     };
   };
+  # ログイン時にキーチェーンのパスフレーズで鍵を ssh-agent に載せる
+  # AddKeysToAgent は ssh 接続時しか効かず、コミット署名 (ssh-keygen -Y sign) だけだと毎回パスフレーズを聞かれるため
+  # 事前に一度 `/usr/bin/ssh-add --apple-use-keychain ~/.ssh/id_ed25519` でキーチェーンに登録しておく
+  launchd.agents.ssh-add-keychain = {
+    enable = true;
+    config = {
+      ProgramArguments = [
+        "/usr/bin/ssh-add"
+        "--apple-load-keychain"
+      ];
+      RunAtLoad = true;
+    };
+  };
   xdg.configFile."nvim".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/nvim";
   xdg.configFile."karabiner".source =
