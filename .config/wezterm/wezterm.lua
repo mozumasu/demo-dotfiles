@@ -45,8 +45,9 @@ end
 send_csi_u("Tab", "CTRL", 9, 5)
 send_csi_u("Tab", "CTRL|SHIFT", 9, 6)
 -- Cmd+Ctrl+p / Cmd+Ctrl+n: previous_agent / next_agent
-send_csi_u("p", "CMD|CTRL", string.byte("p"), 13)
-send_csi_u("n", "CMD|CTRL", string.byte("n"), 13)
+-- (Karabiner で Cmd+↑ / Cmd+↓ に変換されて届くので、矢印キーの修飾付き形式で送る)
+table.insert(config.keys, { key = "UpArrow", mods = "CMD", action = wezterm.action.SendString("\x1b[1;9A") })
+table.insert(config.keys, { key = "DownArrow", mods = "CMD", action = wezterm.action.SendString("\x1b[1;9B") })
 -- Shift+Backspace: focus_pane_left
 send_csi_u("Backspace", "SHIFT", 127, 2)
 -- Ctrl+Shift+j/k/l: focus_pane_down/up/right, Ctrl+Shift+z: zoom

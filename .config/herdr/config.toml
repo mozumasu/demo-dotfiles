@@ -44,8 +44,8 @@ open_worktree = ""    # optional, unset by default
 remove_worktree = ""  # optional, unset by default; opens confirmation
 
 # agent
-previous_agent = "cmd+ctrl+p"     # optional, unset by default
-next_agent = "cmd+ctrl+n"         # optional, unset by default
+previous_agent = "cmd+up"         # Karabiner で Cmd+Ctrl+p → Cmd+↑
+next_agent = "cmd+down"           # Karabiner で Cmd+Ctrl+n → Cmd+↓
 focus_agent = ""        # optional indexed binding, e.g. "prefix+alt+1..9"
 
 remote_image_paste = "ctrl+v" # only active in herdr --remote; empty disables raw-key image paste
@@ -78,8 +78,8 @@ resize_mode = "" # default prefix+r
 toggle_sidebar = "prefix+b"
 
 # Navigate-mode
-navigate_workspace_up = "ctrl+p"
-navigate_workspace_down = "ctrl+n"
+navigate_workspace_up = "up"     # Karabiner で Ctrl+p → ↑
+navigate_workspace_down = "down" # Karabiner で Ctrl+n → ↓
 navigate_pane_left = "h"
 navigate_pane_down = "j"
 navigate_pane_up = "k"
