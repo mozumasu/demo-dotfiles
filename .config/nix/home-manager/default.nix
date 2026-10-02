@@ -44,6 +44,10 @@
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/herdr/config.toml";
   xdg.configFile."zeno".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/zeno";
+  # ~/.claude には認証情報や履歴、クラウド同期される skills/synced も置かれるので設定ファイルだけリンクする
+  # Claude Code が書き換えた内容は dotfiles 側に差分として出るので git diff で確認する
+  home.file.".claude/settings.json".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/claude/settings.json";
   # nb は ~/.nbrc 固定で読むのでホーム直下にリンクする
   home.file.".nbrc".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/nb/nbrc";
