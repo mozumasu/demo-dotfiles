@@ -70,6 +70,9 @@
   # zsh の autoload 関数 (ファイル名 = 関数名)
   xdg.configFile."zsh/functions".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/zsh/functions";
+  # 履歴から入力候補を薄く表示する。zeno と同じ ~/.local/share/zsh/plugins に置いて .zshrc から source する
+  xdg.dataFile."zsh/plugins/zsh-autosuggestions".source =
+    "${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions";
 
   home.activation.macSKKDictionaries = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     DICT_DIR="$HOME/Library/Containers/net.mtgto.inputmethod.macSKK/Data/Documents/Dictionaries"

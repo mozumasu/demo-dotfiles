@@ -46,3 +46,8 @@ if [[ -n $ZENO_LOADED ]]; then
   bindkey '^xx' zeno-insert-snippet
   bindkey '^r' zeno-history-selection
 fi
+
+# zsh-autosuggestions: 履歴から入力候補を薄く表示する (→ か C-e で確定)
+if [[ -r "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]]; then
+  source "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
+fi
