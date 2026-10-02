@@ -22,6 +22,12 @@ config.keys = {
 	{ key = "t", mods = "LEADER", action = wezterm.action.SpawnTab("CurrentPaneDomain") },
 	-- Cmd+t は WezTerm のタブ作成に使わず、herdr (new_tab = "cmd+t") に渡す
 	{ key = "t", mods = "CMD", action = wezterm.action.DisableDefaultAssignment },
+	-- タブの切り替え (leader Tab: 次, leader Shift+Tab: 前)
+	{ key = "Tab", mods = "LEADER", action = wezterm.action.ActivateTabRelative(1) },
+	{ key = "Tab", mods = "LEADER|SHIFT", action = wezterm.action.ActivateTabRelative(-1) },
+	-- Ctrl+Tab / Ctrl+Shift+Tab は WezTerm のタブ切り替えに使わず、herdr (next_tab / previous_tab) に渡す
+	{ key = "Tab", mods = "CTRL", action = wezterm.action.DisableDefaultAssignment },
+	{ key = "Tab", mods = "CTRL|SHIFT", action = wezterm.action.DisableDefaultAssignment },
 }
 
 -- Cmd 付きのキーを herdr などの端末アプリに伝えるため kitty キーボードプロトコルを有効にする
