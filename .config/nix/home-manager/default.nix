@@ -101,6 +101,8 @@
     ripgrep
     # zeno.zsh の実行に必要
     deno
+    # /usr/bin/python3 は Xcode CLT のスタブで、呼ぶとインストールダイアログが出るため nix 版を先に置く
+    python3
     # treesitter パーサーのビルド用 (Xcode CLT なしで使える C コンパイラ)
     clang
     tree-sitter
