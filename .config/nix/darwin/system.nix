@@ -21,6 +21,8 @@
       InitialKeyRepeat = 12;
       # アラート音 (ターミナルのベル含む) を無音に
       "com.apple.sound.beep.volume" = 0.0;
+      # 新しいウィンドウを開くときの拡大アニメーションをなくす (AeroSpace のタイル配置でガタつかない)
+      NSAutomaticWindowAnimationsEnabled = false;
     };
     # Dock アイコンの大きさ (px)。UI スライダーの範囲は 16〜128、16 が最小
     dock.tilesize = 16;
