@@ -34,6 +34,8 @@
       "font-hackgen"
       "font-hackgen-nerd"
       "betterdisplay"
+      # Cmd+Tab の置き換え。ウィンドウのないアプリ (Finder など) を一覧から外せる
+      "alt-tab"
     ];
   };
 }
