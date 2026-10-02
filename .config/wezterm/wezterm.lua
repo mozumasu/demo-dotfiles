@@ -20,18 +20,44 @@ config.keys = {
 	{ key = "q", mods = "CTRL", action = wezterm.action.SendString("\x11") },
 	-- タブの作成 (leader t)
 	{ key = "t", mods = "LEADER", action = wezterm.action.SpawnTab("CurrentPaneDomain") },
-	-- Cmd+t は WezTerm のタブ作成に使わず、herdr (new_tab = "cmd+t") に渡す
-	{ key = "t", mods = "CMD", action = wezterm.action.DisableDefaultAssignment },
 	-- タブの切り替え (leader Tab: 次, leader Shift+Tab: 前)
 	{ key = "Tab", mods = "LEADER", action = wezterm.action.ActivateTabRelative(1) },
 	{ key = "Tab", mods = "LEADER|SHIFT", action = wezterm.action.ActivateTabRelative(-1) },
-	-- Ctrl+Tab / Ctrl+Shift+Tab は WezTerm のタブ切り替えに使わず、herdr (next_tab / previous_tab) に渡す
-	{ key = "Tab", mods = "CTRL", action = wezterm.action.DisableDefaultAssignment },
-	{ key = "Tab", mods = "CTRL|SHIFT", action = wezterm.action.DisableDefaultAssignment },
 }
 
--- Cmd 付きのキーを herdr などの端末アプリに伝えるため kitty キーボードプロトコルを有効にする
-config.enable_kitty_keyboard = true
+-- herdr 用のキーを kitty キーボードプロトコルの CSI u 形式で直接送る
+-- (kitty キーボードを有効にすると IME と相性が悪く herdr で Esc が効かなくなるため)
+-- mods の値は 1 + Shift(1) + Alt(2) + Ctrl(4) + Cmd(8)
+local function send_csi_u(key, mods, codepoint, mod_value)
+	table.insert(config.keys, {
+		key = key,
+		mods = mods,
+		action = wezterm.action.SendString(string.format("\x1b[%d;%du", codepoint, mod_value)),
+	})
+end
+-- Cmd+t: new_tab
+send_csi_u("t", "CMD", string.byte("t"), 9)
+-- Cmd+1..9: switch_tab
+for i = 1, 9 do
+	send_csi_u(tostring(i), "CMD", string.byte(tostring(i)), 9)
+end
+-- Ctrl+Tab / Ctrl+Shift+Tab: next_tab / previous_tab
+send_csi_u("Tab", "CTRL", 9, 5)
+send_csi_u("Tab", "CTRL|SHIFT", 9, 6)
+-- Cmd+Ctrl+p / Cmd+Ctrl+n: previous_agent / next_agent
+send_csi_u("p", "CMD|CTRL", string.byte("p"), 13)
+send_csi_u("n", "CMD|CTRL", string.byte("n"), 13)
+-- Shift+Backspace: focus_pane_left
+send_csi_u("Backspace", "SHIFT", 127, 2)
+-- Ctrl+Shift+j/k/l: focus_pane_down/up/right, Ctrl+Shift+z: zoom
+for _, c in ipairs({ "j", "k", "l", "z" }) do
+	send_csi_u(c, "CTRL|SHIFT", string.byte(c), 6)
+	send_csi_u(c:upper(), "CTRL|SHIFT", string.byte(c), 6)
+end
+
+-- kitty キーボードプロトコルは IME と組み合わせると herdr で Esc が効かなくなるので無効にする
+-- (herdr に必要なキーは上で CSI u を直接送っている)
+config.enable_kitty_keyboard = false
 
 -- OSのIME経由でキー入力を処理する
 config.use_ime = true
