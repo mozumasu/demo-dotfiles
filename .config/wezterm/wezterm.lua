@@ -18,7 +18,14 @@ config.keys = {
 	{ key = "x", mods = "LEADER", action = wezterm.action.CloseCurrentPane({ confirm = true }) },
 	-- IME 経由だと C-q の 1 回目が消えるので、herdr の prefix 用に ^Q を直接送る
 	{ key = "q", mods = "CTRL", action = wezterm.action.SendString("\x11") },
+	-- タブの作成 (leader t)
+	{ key = "t", mods = "LEADER", action = wezterm.action.SpawnTab("CurrentPaneDomain") },
+	-- Cmd+t は WezTerm のタブ作成に使わず、herdr (new_tab = "cmd+t") に渡す
+	{ key = "t", mods = "CMD", action = wezterm.action.DisableDefaultAssignment },
 }
+
+-- Cmd 付きのキーを herdr などの端末アプリに伝えるため kitty キーボードプロトコルを有効にする
+config.enable_kitty_keyboard = true
 
 -- OSのIME経由でキー入力を処理する
 config.use_ime = true
