@@ -43,6 +43,8 @@
     # カーソルのスピード (UI スライダーの最大は 3.0、それ以上も指定可)
     CustomUserPreferences.NSGlobalDomain."com.apple.trackpad.scaling" = 5.0;
     ".GlobalPreferences"."com.apple.mouse.scaling" = 5.0;
+    # Finder に「終了」(Cmd+Q) を追加する。終了すれば Cmd+Tab に常駐しなくなる
+    finder.QuitMenuItem = true;
     # スクリーンショットの保存先 (ファイル保存を選んだとき用。フォルダがないとデスクトップに保存される)
     screencapture.location = "~/Pictures/Screenshots";
     screencapture.type = "png";
