@@ -2,7 +2,7 @@ alias ll='ls -l'
 
 # dotfiles/.config/zsh/functions の関数を必要になった時に読み込む
 fpath=("$ZDOTDIR/functions" $fpath)
-autoload -Uz aws-profile
+autoload -Uz aws-profile cpath
 
 
 autoload -Uz vcs_info
@@ -29,3 +29,6 @@ function ghq-fzf() {
 }
 zle -N ghq-fzf
 bindkey '^g' ghq-fzf
+
+# z でよく行くディレクトリに移動する (zi で fzf から選ぶ)
+eval "$(zoxide init zsh)"

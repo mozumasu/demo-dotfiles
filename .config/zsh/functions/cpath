@@ -1,0 +1,12 @@
+#!/usr/bin/env zsh
+
+# ファイルのフルパスをクリップボードにコピーする (引数なしなら今のディレクトリ)
+local target="${1:-.}"
+if [[ ! -e "$target" ]]; then
+  echo "cpath: '$target' が見つかりません" >&2
+  return 1
+fi
+
+local full_path="${target:a}"
+print -rn -- "$full_path" | pbcopy
+echo "Copied: $full_path"
