@@ -127,6 +127,8 @@
     lazydocker
     # クラウド
     awscli2
+    # Google Drive などのクラウドストレージを同期・マウントする。macOS では macFUSE 不要の `rclone nfsmount` を使う
+    rclone
     # Nix (フォーマッタと LSP。CLI と Neovim で同じバイナリを使うため Mason ではなく nix で入れる)
     nixfmt
     nixd
