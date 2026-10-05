@@ -48,6 +48,19 @@
       RunAtLoad = true;
     };
   };
+  # ssh-agent のソケットはログインのたびにパスが変わり、herdr server のようにログアウトをまたいで生き残るプロセス配下では
+  # 古い SSH_AUTH_SOCK を引き継いでしまう。ログイン時に固定パスへリンクを張り直し、.zshrc でそのパスを使う
+  launchd.agents.ssh-agent-socket-link = {
+    enable = true;
+    config = {
+      ProgramArguments = [
+        "/bin/sh"
+        "-c"
+        ''ln -sfn "$SSH_AUTH_SOCK" "$HOME/.ssh/agent.sock"''
+      ];
+      RunAtLoad = true;
+    };
+  };
   xdg.configFile."nvim".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/nvim";
   xdg.configFile."karabiner".source =
