@@ -1,7 +1,8 @@
 alias ll='ls -l'
 
 # 再ログイン後も古い SSH_AUTH_SOCK を引き継ぐことがあるので、ログイン時に張り直す固定パスを使う (home-manager の ssh-agent-socket-link)
-[[ -S ~/.ssh/agent.sock ]] && export SSH_AUTH_SOCK=~/.ssh/agent.sock
+# ssh でログインしたときは転送されてきた agent を使いたいので上書きしない
+[[ -z $SSH_CONNECTION && -S ~/.ssh/agent.sock ]] && export SSH_AUTH_SOCK=~/.ssh/agent.sock
 
 # dotfiles/.config/zsh/functions の関数を必要になった時に読み込む
 fpath=("$ZDOTDIR/functions" $fpath)
