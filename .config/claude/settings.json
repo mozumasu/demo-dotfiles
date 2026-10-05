@@ -1,3 +1,5 @@
 {
-  "theme": "dark"
+  "theme": "dark",
+  "language": "ja",
+  "editor": "nvim"
 }
