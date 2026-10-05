@@ -23,6 +23,8 @@
       "com.apple.sound.beep.volume" = 0.0;
       # 新しいウィンドウを開くときの拡大アニメーションをなくす (AeroSpace のタイル配置でガタつかない)
       NSAutomaticWindowAnimationsEnabled = false;
+      # ファイルを開く/保存するダイアログでも隠しファイルを表示する (finder.AppleShowAllFiles は Finder にしか効かない)
+      AppleShowAllFiles = true;
     };
     # Dock アイコンの大きさ (px)。UI スライダーの範囲は 16〜128、16 が最小
     dock.tilesize = 16;
