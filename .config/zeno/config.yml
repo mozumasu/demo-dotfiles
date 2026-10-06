@@ -23,6 +23,12 @@ snippets:
     snippet: --resume
     context:
       lbuffer: '^claude\s+'
+  - name: reload shell
+    keyword: r
+    snippet: exec $SHELL -l
+  - name: my ip
+    keyword: myip
+    snippet: curl ifconfig.me
 
 completions:
   # Tab (zeno-completion) で fzf から選ぶ補完
