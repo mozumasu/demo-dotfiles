@@ -4,13 +4,16 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "標準のABCになっていたらControl+Jで macSKK のひらがなに戻す",
+                        "description": "標準のABCや macSKK の英数モードではControl+Jで macSKK のひらがなに戻す (ブラウザ上の Web アプリに C-j を渡さない)",
                         "manipulators": [
                             {
                                 "conditions": [
                                     {
                                         "type": "input_source_if",
-                                        "input_sources": [{ "input_source_id": "^com\\.apple\\.keylayout\\.ABC$" }]
+                                        "input_sources": [
+                                            { "input_source_id": "^com\\.apple\\.keylayout\\.ABC$" },
+                                            { "input_source_id": "^net\\.mtgto\\.inputmethod\\.macSKK\\.(ascii|eisu)$" }
+                                        ]
                                     }
                                 ],
                                 "from": {
