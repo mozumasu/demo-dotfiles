@@ -2,6 +2,7 @@
   config,
   pkgs,
   lib,
+  claude-code-japanese-guard,
   nix-secrets,
   ...
 }:
@@ -71,10 +72,17 @@ in
 
   # skills/synced と共存させるため skills ディレクトリ全体ではなくスキル単位でリンクする
   # .config/claude/skills にディレクトリを置けば自動でリンクされる
-  home.file = lib.mapAttrs' (
-    name: _:
-    lib.nameValuePair ".claude/skills/${name}" {
-      source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/claude/skills/${name}";
-    }
-  ) (lib.filterAttrs (_: type: type == "directory") (builtins.readDir skillsDir));
+  home.file =
+    lib.mapAttrs' (
+      name: _:
+      lib.nameValuePair ".claude/skills/${name}" {
+        source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/claude/skills/${name}";
+      }
+    ) (lib.filterAttrs (_: type: type == "directory") (builtins.readDir skillsDir))
+    // {
+      # 応答が英語主体なら差し戻す Stop hook。/usr/bin/python3 は Xcode CLT のスタブなので nix の python3 で起動する
+      ".claude/hooks/japanese-guard".source = pkgs.writeShellScript "japanese-guard" ''
+        exec ${lib.getExe pkgs.python3} ${claude-code-japanese-guard}/hooks/japanese-guard.py "$@"
+      '';
+    };
 }

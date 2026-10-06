@@ -2,5 +2,17 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "theme": "dark",
   "language": "ja",
-  "editor": "nvim"
+  "editor": "nvim",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/japanese-guard"
+          }
+        ]
+      }
+    ]
+  }
 }
