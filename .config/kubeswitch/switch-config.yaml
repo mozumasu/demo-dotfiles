@@ -1,0 +1,11 @@
+# kubeswitch の設定。~/.kube/switch-config.yaml にリンクする
+# kubeconfig は 1 クラスタ 1 ファイルで ~/.kube/clusters/<group>/<env>.yaml に置く (kube-clusters 関数で生成する)
+# switch の一覧には <group>/<context 名> の形で表示される
+kind: SwitchConfig
+version: v1alpha1
+kubeconfigStores:
+  - kind: filesystem
+    id: clusters
+    kubeconfigName: "*.yaml"
+    paths:
+      - ~/.kube/clusters

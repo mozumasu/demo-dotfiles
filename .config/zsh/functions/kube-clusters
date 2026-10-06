@@ -1,0 +1,22 @@
+#!/usr/bin/env zsh
+
+# ~/.kube/clusters/<group>/<env>.yaml に EKS クラスタの kubeconfig を 1 クラスタ 1 ファイルで作り直す
+# EKS の kubeconfig は aws eks get-token を呼ぶだけで秘密情報を含まないので、いつ作り直してもよい
+# クラスタの一覧は dotfiles に含めず、ローカルのファイルに置く
+#   書式 (1 行 1 クラスタ、# 以降はコメント): <group> <env> <cluster 名> <AWS profile> [region]
+local list=${KUBE_CLUSTERS_LIST:-$HOME/.kube/clusters.list}
+if [[ ! -r $list ]]; then
+  print -u2 "kube-clusters: $list がない。'<group> <env> <cluster 名> <AWS profile> [region]' を 1 行ずつ書く"
+  return 1
+fi
+
+local line group env cluster profile region
+while read -r line; do
+  line=${line%%\#*}
+  [[ -z ${line//[[:space:]]/} ]] && continue
+  read -r group env cluster profile region <<< "$line"
+  mkdir -p ~/.kube/clusters/$group
+  # switch 中のシェルでは KUBECONFIG が一時ファイルを指すので、書き出し先は必ず --kubeconfig で指定する
+  aws eks update-kubeconfig --region "${region:-ap-northeast-1}" --name "$cluster" --profile "$profile" \
+    --kubeconfig ~/.kube/clusters/$group/$env.yaml || return 1
+done < $list

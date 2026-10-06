@@ -109,6 +109,9 @@
   # Raycast の Script Commands のディレクトリとして ~/.config/raycast/scripts を登録して使う
   xdg.configFile."raycast/scripts".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/raycast/scripts";
+  # kubeswitch は ~/.kube/switch-config.yaml 固定で読むのでリンクする
+  home.file.".kube/switch-config.yaml".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/kubeswitch/switch-config.yaml";
   # nb は ~/.nbrc 固定で読むのでホーム直下にリンクする
   home.file.".nbrc".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/nb/nbrc";
