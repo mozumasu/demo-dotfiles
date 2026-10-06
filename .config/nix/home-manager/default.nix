@@ -84,6 +84,8 @@
   # skills/synced と共存させるため skills ディレクトリ全体ではなくスキル単位でリンクする
   home.file.".claude/skills/tech-scrap".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/claude/skills/tech-scrap";
+  home.file.".claude/skills/arc-browser".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/claude/skills/arc-browser";
   # Raycast の Script Commands のディレクトリとして ~/.config/raycast/scripts を登録して使う
   xdg.configFile."raycast/scripts".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/raycast/scripts";
