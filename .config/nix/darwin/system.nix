@@ -2,6 +2,12 @@
 {
   system.stateVersion = 5;
 
+  # nix-darwin の既定は nano。Claude Code の Ctrl+G や git commit などで開くエディタを nvim にする
+  environment.variables = {
+    EDITOR = "nvim";
+    VISUAL = "nvim";
+  };
+
   # sudo を Touch ID で通す (/etc/pam.d/sudo_local に pam_tid.so を書く)
   security.pam.services.sudo_local.touchIdAuth = true;
   # tmux / screen / zellij などサーバー型マルチプレクサの中でも Touch ID を効かせる (pam_reattach)
