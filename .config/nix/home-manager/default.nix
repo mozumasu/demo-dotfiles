@@ -98,14 +98,28 @@
   xdg.dataFile."zsh/plugins/zsh-autosuggestions".source =
     "${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions";
 
-  home.activation.macSKKDictionaries = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    DICT_DIR="$HOME/Library/Containers/net.mtgto.inputmethod.macSKK/Data/Documents/Dictionaries"
-    mkdir -p "$DICT_DIR"
-    cp -f "${pkgs.skkDictionaries.l}/share/skk/SKK-JISYO.L" "$DICT_DIR/"
-    cp -f "${pkgs.skkDictionaries.jinmei}/share/skk/SKK-JISYO.jinmei" "$DICT_DIR/"
-    cp -f "${pkgs.skkDictionaries.emoji}/share/skk/SKK-JISYO.emoji" "$DICT_DIR/"
-    chmod 644 "$DICT_DIR"/SKK-JISYO.*
-  '';
+  # macSKK はサンドボックスアプリなので、辞書は Container にコピーする (リンクは読めない)
+  # Container に触ると、反映を実行したターミナルに「ほかのアプリからのデータへのアクセス」の確認が出る
+  # 毎回出ないよう、コピーした辞書のパスを Container の外に記録し、辞書が変わったときだけコピーする
+  home.activation.macSKKDictionaries =
+    let
+      dictionaries = [
+        "${pkgs.skkDictionaries.l}/share/skk/SKK-JISYO.L"
+        "${pkgs.skkDictionaries.jinmei}/share/skk/SKK-JISYO.jinmei"
+        "${pkgs.skkDictionaries.emoji}/share/skk/SKK-JISYO.emoji"
+      ];
+    in
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      DICT_DIR="$HOME/Library/Containers/net.mtgto.inputmethod.macSKK/Data/Documents/Dictionaries"
+      STAMP="${config.xdg.stateHome}/macskk-dictionaries"
+      WANT="${lib.concatStringsSep " " dictionaries}"
+      if [ "$(cat "$STAMP" 2>/dev/null)" != "$WANT" ]; then
+        mkdir -p "$DICT_DIR" "$(dirname "$STAMP")"
+        cp -f $WANT "$DICT_DIR/"
+        chmod 644 "$DICT_DIR"/SKK-JISYO.*
+        echo "$WANT" > "$STAMP"
+      fi
+    '';
 
   # zeno.zsh は起動時に自分のディレクトリへ node_modules を作るので、読み取り専用の
   # nix store ではなく書き込める ~/.local/share/zsh/plugins/zeno にコピーして使う
