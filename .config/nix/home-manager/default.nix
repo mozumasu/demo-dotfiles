@@ -144,6 +144,8 @@
     lazygit
     # ファイラー
     yazi
+    # タスクランナー
+    just
     # Docker
     lazydocker
     # Kubernetes
