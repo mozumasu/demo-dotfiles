@@ -146,6 +146,8 @@
     yazi
     # Docker
     lazydocker
+    # Kubernetes
+    kubectl
     # クラウド
     awscli2
     # Google Drive などのクラウドストレージを同期・マウントする。macOS では macFUSE 不要の `rclone nfsmount` を使う
