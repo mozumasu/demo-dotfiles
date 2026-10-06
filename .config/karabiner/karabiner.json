@@ -26,6 +26,29 @@
                         ]
                     },
                     {
+                        "description": "ブラウザでは macSKK の日本語モード中の Control+J を捨てる (Web アプリのショートカットに吸われるため。確定は Enter / Control+M で行う)",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "type": "frontmost_application_if",
+                                        "bundle_identifiers": ["^company\\.thebrowser\\.Browser$", "^com\\.apple\\.Safari$"]
+                                    },
+                                    {
+                                        "type": "input_source_if",
+                                        "input_sources": [{ "input_source_id": "^net\\.mtgto\\.inputmethod\\.macSKK\\.(hiragana|katakana|hankaku)$" }]
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "j",
+                                    "modifiers": { "mandatory": ["control"], "optional": ["any"] }
+                                },
+                                "to": [{ "key_code": "vk_none" }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
                         "description": "Control+M to Enter",
                         "manipulators": [
                             {
