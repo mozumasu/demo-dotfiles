@@ -1,0 +1,19 @@
+completions:
+  # 最初に一致した補完が使われるので、aws cli completer より前に置く
+  # aws_completer は --profile の値を補完しないので ~/.aws/config から選ぶ
+  # \ で改行した複数行の入力にも一致するよう、. ではなく [\s\S] を使う
+  - name: aws profile
+    patterns:
+      - '^\s*aws\s(?:[\s\S]*\s)?--profile\s+$'
+      - '(?:^|\s)AWS_PROFILE=$'
+    sourceCommand: "aws configure list-profiles 2>/dev/null | sort"
+    options:
+      --prompt: "'Profile> '"
+      --preview: "grep -A5 -E '^\\[(profile )?{}\\]' ~/.aws/config"
+  - name: aws cli completer
+    patterns:
+      - '^\s*aws(?:$|\s[\s\S]*)$'
+    # aws_completer は改行入りの行を解釈できないので、\ + 改行を空白にしてから渡す
+    sourceCommand: 'l=${LBUFFER//$''\\\n''/ } r=${RBUFFER//$''\\\n''/ }; COMP_LINE="$l$r" COMP_POINT=${#l} aws_completer 2>/dev/null'
+    options:
+      --prompt: "'aws > '"
