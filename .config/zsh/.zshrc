@@ -4,6 +4,9 @@ alias ll='ls -l'
 # ssh でログインしたときは転送されてきた agent を使いたいので上書きしない
 [[ -z $SSH_CONNECTION && -S ~/.ssh/agent.sock ]] && export SSH_AUTH_SOCK=~/.ssh/agent.sock
 
+# fzf の入力欄を上に置き、候補を上から並べる (zeno の補完や zi なども同じ並びになる)
+export FZF_DEFAULT_OPTS='--layout=reverse'
+
 # dotfiles/.config/zsh/functions の関数を必要になった時に読み込む
 fpath=("$ZDOTDIR/functions" $fpath)
 autoload -Uz aws-profile cpath
