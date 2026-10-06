@@ -10,10 +10,29 @@ autoload -Uz aws-profile cpath
 
 
 autoload -Uz vcs_info
-precmd() { vcs_info }
 zstyle ':vcs_info:git:*' formats ' %F{yellow}(%b)%f'
+
+# kubectl の操作対象 (current-context) のクラスタ名を表示する。prod は赤
+# kubectl を起動せず kubeconfig を直接読むのでプロンプトが遅くならない
+_kube_prompt() {
+  kube_prompt=
+  local cfg=${${KUBECONFIG:-$HOME/.kube/config}%%:*} line ctx
+  [[ -r $cfg ]] || return
+  for line in "${(@f)$(<$cfg)}"; do
+    [[ $line == current-context:* ]] && { ctx=${${line#current-context:}// /}; break; }
+  done
+  [[ -n $ctx ]] || return
+  local name=${ctx##*/}
+  if [[ $name == prod* ]]; then
+    kube_prompt=" %F{red}⎈ $name%f"
+  else
+    kube_prompt=" %F{cyan}⎈ $name%f"
+  fi
+}
+
+precmd() { vcs_info; _kube_prompt }
 setopt PROMPT_SUBST
-PROMPT='%F{blue}%~%f${vcs_info_msg_0_} '
+PROMPT='%F{blue}%~%f${vcs_info_msg_0_}${kube_prompt} '
 PROMPT+='%(?.%F{green}.%F{red})❯%f '
 
 
