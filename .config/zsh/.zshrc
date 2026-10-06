@@ -33,6 +33,12 @@ _kube_prompt() {
   fi
 }
 
+# kubeswitch: switch は KUBECONFIG を書き換えるのでシェル関数として読み込む
+if (( $+commands[switcher] )); then
+  source <(switcher init zsh)
+  compdef _switcher switch
+fi
+
 precmd() { vcs_info; _kube_prompt }
 setopt PROMPT_SUBST
 PROMPT='%F{blue}%~%f${vcs_info_msg_0_}${kube_prompt} '
