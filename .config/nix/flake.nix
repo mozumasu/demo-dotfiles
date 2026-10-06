@@ -17,6 +17,11 @@
       url = "github:yuki-yano/zeno.zsh";
       flake = false;
     };
+    # 公開したくない設定 (sops で暗号化済み)。private リポジトリなので ssh で取得する
+    nix-secrets = {
+      url = "git+ssh://git@github.com/mozumasu/nix-secrets.git";
+      flake = false;
+    };
   };
   outputs =
     {
@@ -28,6 +33,7 @@
       llm-agents,
       ccsession,
       zeno,
+      nix-secrets,
       ...
     }:
     let
@@ -57,7 +63,7 @@
               useGlobalPkgs = true;
               useUserPackages = true;
               backupFileExtension = "backup";
-              extraSpecialArgs = { inherit ccsession zeno; };
+              extraSpecialArgs = { inherit ccsession zeno nix-secrets; };
               users."mozumasu" = import ./home-manager;
             };
           }

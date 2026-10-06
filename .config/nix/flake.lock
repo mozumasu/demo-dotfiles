@@ -189,6 +189,22 @@
         "type": "github"
       }
     },
+    "nix-secrets": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791246294,
+        "narHash": "sha256-8IN0tL+m3AeQl9Qgg9U6A9yoE6538rcIlNIbZMHTcus=",
+        "ref": "refs/heads/main",
+        "rev": "80afee5e7125cd09d2e980cdec80698ad66791b6",
+        "revCount": 1,
+        "type": "git",
+        "url": "ssh://git@github.com/mozumasu/nix-secrets.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/mozumasu/nix-secrets.git"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1779560665,
@@ -241,6 +257,7 @@
         "home-manager": "home-manager",
         "llm-agents": "llm-agents",
         "nix-homebrew": "nix-homebrew",
+        "nix-secrets": "nix-secrets",
         "nixpkgs": "nixpkgs_3",
         "treefmt-nix": "treefmt-nix_2",
         "zeno": "zeno"

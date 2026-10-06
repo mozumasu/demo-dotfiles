@@ -4,6 +4,7 @@
   lib,
   ccsession,
   zeno,
+  nix-secrets,
   ...
 }:
 {
@@ -77,10 +78,29 @@
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/herdr/config.toml";
   xdg.configFile."zeno".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/zeno";
-  # ~/.claude には認証情報や履歴、クラウド同期される skills/synced も置かれるので設定ファイルだけリンクする
-  # Claude Code が書き換えた内容は dotfiles 側に差分として出るので git diff で確認する
-  home.file.".claude/settings.json".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/claude/settings.json";
+  # ~/.claude/settings.json はリンクせず、実ファイルに公開設定と非公開設定 (nix-secrets を sops で復号) をマージする
+  # 仕事の情報を公開リポジトリに入れないため。Claude Code が /config などで書き込んだキーは実ファイルに残り、dotfiles 側のキーが優先される
+  # 配列は連結ではなく後勝ちで置き換わる。dotfiles から消したキーは実ファイルに残るので手で消す
+  home.activation.claudeSettings = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    SETTINGS="$HOME/.claude/settings.json"
+    run mkdir -p "$HOME/.claude"
+    CURRENT="$(mktemp "$HOME/.claude/.settings.json.XXXXXX")"
+    # 旧構成のリンクが残っていても、リンク先の内容を引き継いでから実ファイルに置き換える
+    if [ -f "$SETTINGS" ]; then cat "$SETTINGS" > "$CURRENT"; else echo '{}' > "$CURRENT"; fi
+    if ! ${lib.getExe pkgs.jq} -s '.[0] * .[1] * .[2]' \
+      "$CURRENT" \
+      ${../../claude/settings.json} \
+      <(SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt" ${lib.getExe pkgs.sops} -d ${nix-secrets}/claude-settings.json \
+        || { warnEcho "Claude Code: 非公開設定を復号できないので公開設定だけマージする" >&2; echo '{}'; }) \
+      > "$CURRENT.new"; then
+      rm -f "$CURRENT" "$CURRENT.new"
+      errorEcho "Claude Code: settings.json のマージに失敗した"
+      exit 1
+    fi
+    rm -f "$CURRENT"
+    chmod 644 "$CURRENT.new"
+    run mv "$CURRENT.new" "$SETTINGS"
+  '';
   # skills/synced と共存させるため skills ディレクトリ全体ではなくスキル単位でリンクする
   home.file.".claude/skills/tech-scrap".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/claude/skills/tech-scrap";
@@ -127,6 +147,9 @@
   home.packages = with pkgs; [
     # 最低限
     fzf
+    # nix-secrets の編集 (sops <file>) 用。鍵は ~/.config/sops/age/keys.txt
+    sops
+    age
     zoxide
     neovim
     ripgrep
