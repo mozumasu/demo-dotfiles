@@ -149,6 +149,29 @@
       fi
     '';
 
+  # macSKK のキー設定も .config/macskk/key-binding-set.json で管理する。設定画面で変えても次に変わったときに戻る
+  # ひらがな (確定) に C-j に加えて F19 を割り当てている。ブラウザでは Karabiner が C-j を F19 に置き換え、Web アプリのショートカットに C-j を渡さない
+  # 辞書と同じく、変わったときだけ Container に書く
+  home.activation.macSKKKeyBindings =
+    let
+      keyBindingSet = lib.importJSON ../../macskk/key-binding-set.json;
+      plist = lib.generators.toPlist { escape = true; } keyBindingSet;
+      # defaults write には <plist> の中身 (<dict>...</dict>) だけを渡す
+      fragment = builtins.head (builtins.match ".*<plist version=\"1.0\">\n(.*)\n</plist>.*" plist);
+    in
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      PREFS="$HOME/Library/Containers/net.mtgto.inputmethod.macSKK/Data/Library/Preferences/net.mtgto.inputmethod.macSKK"
+      STAMP="${config.xdg.stateHome}/macskk-key-bindings"
+      WANT=${lib.escapeShellArg (builtins.hashString "sha256" plist)}
+      if [ "$(cat "$STAMP" 2>/dev/null)" != "$WANT" ]; then
+        mkdir -p "$(dirname "$STAMP")"
+        /usr/bin/defaults write "$PREFS" keyBindingSets -array ${lib.escapeShellArg fragment}
+        /usr/bin/defaults write "$PREFS" selectedKeyBindingSetId -string ${lib.escapeShellArg keyBindingSet.id}
+        /usr/bin/killall macSKK 2>/dev/null || true
+        echo "$WANT" > "$STAMP"
+      fi
+    '';
+
   # zeno.zsh は起動時に自分のディレクトリへ node_modules を作るので、読み取り専用の
   # nix store ではなく書き込める ~/.local/share/zsh/plugins/zeno にコピーして使う
   home.activation.zeno = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

@@ -1,0 +1,344 @@
+{
+  "id": "dotfiles",
+  "keyBindings": [
+    {
+      "inputs": [
+        {
+          "key": "j",
+          "modifierFlags": 262144,
+          "optionalModifierFlags": 0
+        },
+        {
+          "key": 80,
+          "modifierFlags": 0,
+          "optionalModifierFlags": 8388608
+        }
+      ],
+      "action": "hiragana"
+    },
+    {
+      "inputs": [
+        {
+          "key": "q",
+          "modifierFlags": 0,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "toggleKana"
+    },
+    {
+      "inputs": [
+        {
+          "key": "q",
+          "modifierFlags": 0,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "toggleAndFixKana"
+    },
+    {
+      "inputs": [],
+      "action": "hankakuKana"
+    },
+    {
+      "inputs": [
+        {
+          "key": "l",
+          "modifierFlags": 0,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "direct"
+    },
+    {
+      "inputs": [],
+      "action": "toggleDirect"
+    },
+    {
+      "inputs": [
+        {
+          "key": "l",
+          "modifierFlags": 131072,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "zenkaku"
+    },
+    {
+      "inputs": [
+        {
+          "key": "/",
+          "modifierFlags": 0,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "abbrev"
+    },
+    {
+      "inputs": [
+        {
+          "key": ";",
+          "modifierFlags": 262144,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "directAbbrev"
+    },
+    {
+      "inputs": [
+        {
+          "key": "q",
+          "modifierFlags": 131072,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "japanese"
+    },
+    {
+      "inputs": [
+        {
+          "key": ";",
+          "modifierFlags": 0,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "stickyShift"
+    },
+    {
+      "inputs": [
+        {
+          "key": 36,
+          "modifierFlags": 0,
+          "optionalModifierFlags": 655360
+        }
+      ],
+      "action": "enter"
+    },
+    {
+      "inputs": [
+        {
+          "key": 49,
+          "modifierFlags": 0,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "space"
+    },
+    {
+      "inputs": [
+        {
+          "key": 49,
+          "modifierFlags": 131072,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "shiftSpace"
+    },
+    {
+      "inputs": [
+        {
+          "key": "x",
+          "modifierFlags": 0,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "backwardCandidate"
+    },
+    {
+      "inputs": [
+        {
+          "key": 48,
+          "modifierFlags": 0,
+          "optionalModifierFlags": 131072
+        }
+      ],
+      "action": "tab"
+    },
+    {
+      "inputs": [
+        {
+          "key": 51,
+          "modifierFlags": 0,
+          "optionalModifierFlags": 655360
+        },
+        {
+          "key": "h",
+          "modifierFlags": 262144,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "backspace"
+    },
+    {
+      "inputs": [
+        {
+          "key": 117,
+          "modifierFlags": 8388608,
+          "optionalModifierFlags": 0
+        },
+        {
+          "key": "d",
+          "modifierFlags": 262144,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "delete"
+    },
+    {
+      "inputs": [
+        {
+          "key": 53,
+          "modifierFlags": 0,
+          "optionalModifierFlags": 0
+        },
+        {
+          "key": "g",
+          "modifierFlags": 262144,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "cancel"
+    },
+    {
+      "inputs": [
+        {
+          "key": 123,
+          "modifierFlags": 8388608,
+          "optionalModifierFlags": 655360
+        },
+        {
+          "key": "b",
+          "modifierFlags": 262144,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "left"
+    },
+    {
+      "inputs": [
+        {
+          "key": 124,
+          "modifierFlags": 8388608,
+          "optionalModifierFlags": 655360
+        },
+        {
+          "key": "f",
+          "modifierFlags": 262144,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "right"
+    },
+    {
+      "inputs": [
+        {
+          "key": 125,
+          "modifierFlags": 8388608,
+          "optionalModifierFlags": 131072
+        },
+        {
+          "key": "n",
+          "modifierFlags": 262144,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "down"
+    },
+    {
+      "inputs": [
+        {
+          "key": 126,
+          "modifierFlags": 8388608,
+          "optionalModifierFlags": 131072
+        },
+        {
+          "key": "p",
+          "modifierFlags": 262144,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "up"
+    },
+    {
+      "inputs": [
+        {
+          "key": "a",
+          "modifierFlags": 262144,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "startOfLine"
+    },
+    {
+      "inputs": [
+        {
+          "key": "e",
+          "modifierFlags": 262144,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "endOfLine"
+    },
+    {
+      "inputs": [
+        {
+          "key": "x",
+          "modifierFlags": 131072,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "unregister"
+    },
+    {
+      "inputs": [
+        {
+          "key": "y",
+          "modifierFlags": 262144,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "registerPaste"
+    },
+    {
+      "inputs": [
+        {
+          "key": "/",
+          "modifierFlags": 262144,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "reconvert"
+    },
+    {
+      "inputs": [
+        {
+          "key": ".",
+          "modifierFlags": 131072,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "affix"
+    },
+    {
+      "inputs": [
+        {
+          "key": 102,
+          "modifierFlags": 0,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "eisu"
+    },
+    {
+      "inputs": [
+        {
+          "key": 104,
+          "modifierFlags": 0,
+          "optionalModifierFlags": 0
+        }
+      ],
+      "action": "kana"
+    }
+  ],
+  "version": 1
+}

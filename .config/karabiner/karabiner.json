@@ -4,6 +4,29 @@
             "complex_modifications": {
                 "rules": [
                     {
+                        "description": "ブラウザでは macSKK 使用中の Control+J を F19 に置き換える (Web アプリのショートカットに吸われるため。macSKK 側で F19 をひらがな/確定に割り当てている)",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "type": "frontmost_application_if",
+                                        "bundle_identifiers": ["^company\\.thebrowser\\.Browser$", "^com\\.apple\\.Safari$"]
+                                    },
+                                    {
+                                        "type": "input_source_if",
+                                        "input_sources": [{ "input_source_id": "^net\\.mtgto\\.inputmethod\\.macSKK\\." }]
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "j",
+                                    "modifiers": { "mandatory": ["control"], "optional": ["any"] }
+                                },
+                                "to": [{ "key_code": "f19" }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
                         "description": "標準のABCや macSKK の英数モードではControl+Jで macSKK のひらがなに戻す (ブラウザ上の Web アプリに C-j を渡さない)",
                         "manipulators": [
                             {
@@ -21,29 +44,6 @@
                                     "modifiers": { "mandatory": ["control"], "optional": ["any"] }
                                 },
                                 "to": [{ "select_input_source": { "input_source_id": "^net\\.mtgto\\.inputmethod\\.macSKK\\.hiragana$" } }],
-                                "type": "basic"
-                            }
-                        ]
-                    },
-                    {
-                        "description": "ブラウザでは macSKK の日本語モード中の Control+J を捨てる (Web アプリのショートカットに吸われるため。確定は Enter / Control+M で行う)",
-                        "manipulators": [
-                            {
-                                "conditions": [
-                                    {
-                                        "type": "frontmost_application_if",
-                                        "bundle_identifiers": ["^company\\.thebrowser\\.Browser$", "^com\\.apple\\.Safari$"]
-                                    },
-                                    {
-                                        "type": "input_source_if",
-                                        "input_sources": [{ "input_source_id": "^net\\.mtgto\\.inputmethod\\.macSKK\\.(hiragana|katakana|hankaku)$" }]
-                                    }
-                                ],
-                                "from": {
-                                    "key_code": "j",
-                                    "modifiers": { "mandatory": ["control"], "optional": ["any"] }
-                                },
-                                "to": [{ "key_code": "vk_none" }],
                                 "type": "basic"
                             }
                         ]
