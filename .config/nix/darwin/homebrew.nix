@@ -38,5 +38,9 @@
       # Cmd+Tab の置き換え。ウィンドウのないアプリ (Finder など) を一覧から外せる
       "alt-tab"
     ];
+    # Mac App Store 限定のアプリ。mas で入れるので App Store にサインインしておく必要がある
+    masApps = {
+      "Endel" = 1346247457;
+    };
   };
 }
