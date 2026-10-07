@@ -171,6 +171,7 @@
     zoxide
     neovim
     ripgrep
+    fd
     # zeno.zsh の実行に必要
     deno
     # /usr/bin/python3 は Xcode CLT のスタブで、呼ぶとインストールダイアログが出るため nix 版を先に置く
