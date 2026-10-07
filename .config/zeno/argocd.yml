@@ -1,9 +1,21 @@
 completions:
+  # 最初に一致した補完が使われるので、より具体的なものから並べる
+  # argocd context <Tab> / argocd --argocd-context <Tab> → ログイン済みの context を選ぶ
+  # argocd context の出力 (CURRENT NAME SERVER) から名前を取り出す。* が付いた行は 2 列目が名前
+  - name: argocd context
+    patterns:
+      - '^\s*argocd\s+context\s+$'
+      - '^\s*argocd\s(?:.*\s)?--argocd-context(?:\s+|=)$'
+    sourceCommand: "argocd context 2>/dev/null | awk 'NR > 1 { print ($1 == \"*\") ? $2 : $1 }'"
+    options:
+      --prompt: "'Context> '"
+      --preview: "argocd context 2>/dev/null | awk -v c={} 'NR > 1 && (($1 == \"*\" && $2 == c) || $1 == c)'"
   # argocd app diff <Tab> → Application を選ぶ。app 名を取るほかのサブコマンドでも使う
+  # 行内に --argocd-context があれば、その context の Application から選ぶ
   # argocd にログインしていなければ、今の kube context の Application から選ぶ (kubeswitch の切り替えに追従する)
   - name: argocd app name
     patterns:
-      - '^\s*argocd\s+app\s+(?:diff|get|sync|history|manifests|refresh|rollback|wait|resources|logs|delete|set|unset|terminate-op)\s+(?:-\S+\s+)*$'
-    sourceCommand: "{ argocd app list -o name 2>/dev/null || kubectl get applications.argoproj.io -A --no-headers -o custom-columns=NAME:.metadata.name 2>/dev/null; } | sort -u"
+      - '^\s*argocd\s(?:.*\s)?app\s+(?:diff|get|sync|history|manifests|refresh|rollback|wait|resources|logs|delete|set|unset|terminate-op)\s+(?:-\S+\s+)*$'
+    sourceCommand: "ctx=$(print -r -- $LBUFFER | sed -nE 's/.*--argocd-context[ =]([^ ]+).*/\\1/p'); { argocd ${ctx:+--argocd-context=$ctx} app list -o name 2>/dev/null || kubectl get applications.argoproj.io -A --no-headers -o custom-columns=NAME:.metadata.name 2>/dev/null; } | sort -u"
     options:
       --prompt: "'App> '"
