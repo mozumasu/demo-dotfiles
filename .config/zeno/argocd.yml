@@ -10,6 +10,14 @@ completions:
     options:
       --prompt: "'Context> '"
       --preview: "argocd context 2>/dev/null | awk -v c={} 'NR > 1 && (($1 == \"*\" && $2 == c) || $1 == c)'"
+  # argocd login <Tab> → サーバーを選ぶ
+  # 一度ログインしたサーバー (argocd context の SERVER 列) と、今の kube context で argocd-server に向いている Ingress のホストから選ぶ
+  - name: argocd login server
+    patterns:
+      - '^\s*argocd\s+login\s+(?:-\S+\s+)*$'
+    sourceCommand: "{ argocd context 2>/dev/null | awk 'NR > 1 { print $NF }'; kubectl get ingress -A -o json 2>/dev/null | jq -r '.items[].spec.rules[]? | select(any(.http.paths[]?; .backend.service.name == \"argocd-server\")) | .host // empty' 2>/dev/null; } | grep -v '^$' | sort -u"
+    options:
+      --prompt: "'Server> '"
   # argocd app diff <Tab> → Application を選ぶ。app 名を取るほかのサブコマンドでも使う
   # 行内に --argocd-context があれば、その context の Application から選ぶ
   # argocd にログインしていなければ、今の kube context の Application から選ぶ (kubeswitch の切り替えに追従する)
