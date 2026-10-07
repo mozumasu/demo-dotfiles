@@ -27,6 +27,56 @@ let
         managed: $paths
       }
   '';
+  # Claude Code がスラッシュコマンド (/config, /model, /theme 等) で ~/.claude/settings.json に書いた変更を dotfiles に取り込む
+  # 非公開設定 (nix-secrets) 由来のキーは公開リポジトリに入れないよう除く。書き込んだ後は git diff で確認してからコミットする
+  claudeSettingsPull = pkgs.writeShellApplication {
+    name = "claude-settings-pull";
+    runtimeInputs = [
+      pkgs.jq
+      pkgs.git
+    ];
+    text = ''
+      SETTINGS="$HOME/.claude/settings.json"
+      MANAGED="$HOME/.claude/.dotfiles-managed-keys.json"
+      DOTFILES="${config.home.homeDirectory}/dotfiles"
+      PUBLIC="$DOTFILES/.config/claude/settings.json"
+      # 管理キーの記録がないと非公開設定のキーを見分けられず、公開リポジトリに漏れるので止める
+      if [ ! -f "$MANAGED" ]; then
+        echo "$MANAGED がない。darwin-rebuild switch を一度実行してから使う" >&2
+        exit 1
+      fi
+      tmp="$(mktemp)"
+      trap 'rm -f "$tmp"' EXIT
+      # 非公開設定のキー = 前回マージした管理キーのうち公開設定にないもの。それを消した残りを公開設定とする
+      # 消した結果空になったオブジェクト (autoMode など) は残さない
+      jq -n \
+        --slurpfile current "$SETTINGS" \
+        --slurpfile managed "$MANAGED" \
+        --slurpfile public "$PUBLIC" \
+        -f ${pullSettings} > "$tmp"
+      mv "$tmp" "$PUBLIC"
+      trap - EXIT
+      git -C "$DOTFILES" --no-pager diff -- "$PUBLIC"
+    '';
+  };
+  pullSettings = pkgs.writeText "pull-claude-settings.jq" ''
+    def leaves:
+      to_entries[]
+      | if (.value | type) == "object" and (.value | length) > 0
+        then [.key] + (.value | leaves)
+        else [.key]
+        end;
+    def prune:
+      if type == "object"
+      then with_entries(.value |= prune) | with_entries(select(.value != {}))
+      else .
+      end;
+    ([$public[0] | leaves]) as $publicPaths
+    | ($managed[0] - $publicPaths) as $secretPaths
+    | ($current[0] | delpaths($secretPaths) | prune) as $result
+    # 差分が並び替えだらけにならないよう、既存キーは dotfiles 側の順に並べ、新しいキーは後ろに足す
+    | (reduce ($public[0] | keys_unsorted[] | select(. as $k | $result | has($k))) as $k ({}; .[$k] = $result[$k])) + $result
+  '';
 in
 {
   # ~/.claude/settings.json はリンクせず、実ファイルに公開設定と非公開設定 (nix-secrets を sops で復号) をマージする
@@ -72,6 +122,8 @@ in
 
   # skills/synced と共存させるため skills ディレクトリ全体ではなくスキル単位でリンクする
   # .config/claude/skills にディレクトリを置けば自動でリンクされる
+  home.packages = [ claudeSettingsPull ];
+
   home.file =
     lib.mapAttrs' (
       name: _:
