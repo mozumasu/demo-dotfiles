@@ -194,6 +194,7 @@
     kubectl
     # switch コマンドで kubeconfig / context を選んで切り替える (シェルごとに別の KUBECONFIG を使う)
     kubeswitch
+    argocd
     # クラウド
     awscli2
     # Google Drive などのクラウドストレージを同期・マウントする。macOS では macFUSE 不要の `rclone nfsmount` を使う
