@@ -100,23 +100,51 @@
 
   # macSKK はサンドボックスアプリなので、辞書は Container にコピーする (リンクは読めない)
   # Container に触ると、反映を実行したターミナルに「ほかのアプリからのデータへのアクセス」の確認が出る
-  # 毎回出ないよう、コピーした辞書のパスを Container の外に記録し、辞書が変わったときだけコピーする
+  # 毎回出ないよう、コピーした辞書と設定を Container の外に記録し、変わったときだけ Container に書く
+  # 辞書の一覧 (有効/無効・文字コード) も macSKK の設定画面ではなくここで管理する。設定画面で変えても次に変わったときに戻る
   home.activation.macSKKDictionaries =
     let
+      # encoding は Swift の String.Encoding の rawValue (EUC-JP = 3, UTF-8 = 4)
       dictionaries = [
-        "${pkgs.skkDictionaries.l}/share/skk/SKK-JISYO.L"
-        "${pkgs.skkDictionaries.jinmei}/share/skk/SKK-JISYO.jinmei"
-        "${pkgs.skkDictionaries.emoji}/share/skk/SKK-JISYO.emoji"
+        {
+          src = "${pkgs.skkDictionaries.l}/share/skk/SKK-JISYO.L";
+          encoding = 3;
+        }
+        {
+          src = "${pkgs.skkDictionaries.jinmei}/share/skk/SKK-JISYO.jinmei";
+          encoding = 3;
+        }
+        {
+          src = "${pkgs.skkDictionaries.emoji}/share/skk/SKK-JISYO.emoji";
+          encoding = 4;
+        }
       ];
+      # macSKK は enabled を Bool、encoding を整数で読むので、型を保てる XML の断片で defaults write に渡す
+      toSetting =
+        d:
+        lib.escapeShellArg (
+          "<dict>"
+          + "<key>filename</key><string>${baseNameOf d.src}</string>"
+          + "<key>enabled</key><true/>"
+          + "<key>type</key><string>traditional</string>"
+          + "<key>encoding</key><integer>${toString d.encoding}</integer>"
+          + "<key>saveToUserDict</key><true/>"
+          + "</dict>"
+        );
+      settings = lib.concatMapStringsSep " " toSetting dictionaries;
     in
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      DICT_DIR="$HOME/Library/Containers/net.mtgto.inputmethod.macSKK/Data/Documents/Dictionaries"
+      CONTAINER="$HOME/Library/Containers/net.mtgto.inputmethod.macSKK/Data"
+      DICT_DIR="$CONTAINER/Documents/Dictionaries"
       STAMP="${config.xdg.stateHome}/macskk-dictionaries"
-      WANT="${lib.concatStringsSep " " dictionaries}"
+      WANT=${lib.escapeShellArg (builtins.hashString "sha256" (builtins.toJSON dictionaries))}
       if [ "$(cat "$STAMP" 2>/dev/null)" != "$WANT" ]; then
         mkdir -p "$DICT_DIR" "$(dirname "$STAMP")"
-        cp -f $WANT "$DICT_DIR/"
+        cp -f ${lib.concatMapStringsSep " " (d: d.src) dictionaries} "$DICT_DIR/"
         chmod 644 "$DICT_DIR"/SKK-JISYO.*
+        /usr/bin/defaults write "$CONTAINER/Library/Preferences/net.mtgto.inputmethod.macSKK" dictionaries -array ${settings}
+        # 起動中の macSKK は設定を読み直さないので終了させる。次に入力するときに macOS が起動し直す
+        /usr/bin/killall macSKK 2>/dev/null || true
         echo "$WANT" > "$STAMP"
       fi
     '';
