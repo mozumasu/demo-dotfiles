@@ -1,21 +1,24 @@
 completions:
   # 最初に一致した補完が使われるので、より具体的なものから並べる
   # sourceCommand は現在のシェルで動くので KUBECONFIG (kubeswitch) の切り替えに追従する
-  - name: kubectl namespace
+  # 汎用の kubectl completer (最後) で補完できるものは個別に書かない。ここには複数選択など completer にできないものだけ置く
+  # kubectl get pods -o<Tab> (スペースなし) → 出力形式を選んで -oyaml の形で入れる
+  # completer だと "-o" という語の補完 (フラグ名) になるので、値を補完させるために空の語を足して渡す
+  - name: kubectl output format (no space)
     patterns:
-      - '^\s*kubectl\s(?:.*\s)?(?:-n|--namespace)\s+$'
-    sourceCommand: "kubectl get namespaces -o name 2>/dev/null | sed 's|^namespace/||'"
-    options:
-      --prompt: "'Namespace> '"
-  # kubectl get pods -o <Tab> → 出力形式を選ぶ。-o の直後 (スペースなし) でも -oyaml の形で入る
-  # jsonpath / go-template などは選んだ後に =... を続けて書く
-  - name: kubectl output format
-    patterns:
-      - '^\s*kubectl\s(?:.*\s)?(?:-o|--output)\s+$'
       - '^\s*kubectl\s(?:.*\s)?-o$'
-    sourceCommand: "printf '%s\\n' yaml json wide name jsonpath jsonpath-as-json jsonpath-file custom-columns custom-columns-file go-template go-template-file template templatefile kyaml"
+    sourceCommand: 'a=(${(z)LBUFFER}); kubectl __complete "${(@)a[2,-1]}" "" 2>/dev/null | grep -v "^:"'
     options:
       --prompt: "'Output> '"
+  # kubectl -n foo rollout restart <Tab> → 行内の namespace の Deployment / StatefulSet / DaemonSet を複数選ぶ
+  # deploy/api deploy/worker のように種類/名前の形で入る。続けて Tab を押せば追加できる
+  - name: kubectl rollout target
+    patterns:
+      - '^\s*kubectl\s(?:.*\s)?rollout\s+(?:restart|status|history|undo|pause|resume)\s+(?:\S+\s+)*$'
+    sourceCommand: "ns=$(print -r -- $LBUFFER | sed -nE 's/.* (-n|--namespace)[ =]([^ ]+).*/\\2/p'); kubectl get deployments,statefulsets,daemonsets ${ns:+--namespace=$ns} -o name 2>/dev/null | sed -E 's|^deployment\\.apps/|deploy/|; s|^statefulset\\.apps/|sts/|; s|^daemonset\\.apps/|ds/|'"
+    options:
+      --multi: true
+      --prompt: "'Rollout> '"
   # kubectl -n foo get deploy,externalsecret <Tab> → 行内の namespace と種類のリソースを選ぶ
   - name: kubectl resource name
     patterns:
@@ -36,3 +39,17 @@ completions:
       --multi: true
       --prompt: "'Kind> '"
     callback: "paste -sd, -"
+  # 上のどれにも当たらなければ kubectl 組み込みの補完 (kubectl __complete) の候補を fzf で選ぶ (aws cli completer と同じ形)
+  # サブコマンド・フラグ・namespace (-n)・出力形式 (-o)・リソース名など kubectl が補完できるものは全部ここで拾える。-n や --context も考慮される
+  # ファイルを取るフラグの後ろは kubectl が候補を出さないので、zeno の補完に任せず通常の補完にする
+  - name: kubectl completer
+    patterns:
+      - '^(?!.*\s(?:-f|--filename|-k|--kustomize|--kubeconfig)\s+$)\s*kubectl\s.*$'
+    # 補完中の語が空なら "" を足して渡す。出力の最後の :<数字> 行 (シェルへの指示) は除く
+    sourceCommand: 'a=(${(z)LBUFFER}); [[ $LBUFFER == *[[:space:]] ]] && a+=(""); kubectl __complete "${(@)a[2,-1]}" 2>/dev/null | grep -v "^:"'
+    options:
+      --prompt: "'kubectl > '"
+      --delimiter: "'\t'"
+      --nth: "1"
+    # 説明 (タブの後ろ) を落とし、入力途中の語は選んだ候補で置き換える
+    callback: 'cut -f1 | { cur=${LBUFFER##*[[:space:]]}; while IFS= read -r c; do print -r -- "$LBUFFER${c#$cur}"; done; }'
