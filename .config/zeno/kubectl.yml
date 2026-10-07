@@ -1,0 +1,38 @@
+completions:
+  # 最初に一致した補完が使われるので、より具体的なものから並べる
+  # sourceCommand は現在のシェルで動くので KUBECONFIG (kubeswitch) の切り替えに追従する
+  - name: kubectl namespace
+    patterns:
+      - '^\s*kubectl\s(?:.*\s)?(?:-n|--namespace)\s+$'
+    sourceCommand: "kubectl get namespaces -o name 2>/dev/null | sed 's|^namespace/||'"
+    options:
+      --prompt: "'Namespace> '"
+  # kubectl get pods -o <Tab> → 出力形式を選ぶ。-o の直後 (スペースなし) でも -oyaml の形で入る
+  # jsonpath / go-template などは選んだ後に =... を続けて書く
+  - name: kubectl output format
+    patterns:
+      - '^\s*kubectl\s(?:.*\s)?(?:-o|--output)\s+$'
+      - '^\s*kubectl\s(?:.*\s)?-o$'
+    sourceCommand: "printf '%s\\n' yaml json wide name jsonpath jsonpath-as-json jsonpath-file custom-columns custom-columns-file go-template go-template-file template templatefile kyaml"
+    options:
+      --prompt: "'Output> '"
+  # kubectl -n foo get deploy,externalsecret <Tab> → 行内の namespace と種類のリソースを選ぶ
+  - name: kubectl resource name
+    patterns:
+      - '^\s*kubectl\s(?:.*\s)?(?:get|describe|delete|edit)\s+[^-\s]\S*\s+(?:[^-\s]\S*\s+)*$'
+    # zeno はクライアントの応答を行単位で読むので、複数行にすると 2 行目以降が fzf のオプション扱いになる。必ず 1 行で書く
+    # 種類は引数で渡しているので、-o name の "kind/" を外して名前だけにする (付けたままだと kubectl がエラーにする)
+    sourceCommand: "ns=$(print -r -- $LBUFFER | sed -nE 's/.* (-n|--namespace)[ =]([^ ]+).*/\\2/p'); kind=$(print -r -- $LBUFFER | sed -nE 's/.* (get|describe|delete|edit) +([^- ][^ ]*).*/\\2/p'); kubectl get $kind ${ns:+--namespace=$ns} -o name 2>/dev/null | sed 's|^[^/]*/||' | sort -u"
+    options:
+      --multi: true
+      --prompt: "'Resource> '"
+  # kubectl -n foo get <Tab> → リソースの種類を複数選んで , でつなぐ (deploy,externalsecret 等)
+  # get deploy, <Tab> のように , の後ろでも追加できる
+  - name: kubectl resource type
+    patterns:
+      - '^\s*kubectl\s(?:.*\s)?(?:get|describe|delete|edit|explain)\s+(?:\S+,)?$'
+    sourceCommand: "kubectl api-resources --verbs=list --no-headers 2>/dev/null | awk '{print $1}' | sort -u"
+    options:
+      --multi: true
+      --prompt: "'Kind> '"
+    callback: "paste -sd, -"
