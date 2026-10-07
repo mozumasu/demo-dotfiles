@@ -29,6 +29,14 @@ snippets:
   - name: my ip
     keyword: myip
     snippet: curl ifconfig.me
+  # nix-darwin / home-manager の設定を反映する
+  - name: darwin-rebuild switch
+    keyword: drs
+    snippet: sudo darwin-rebuild switch --flake ~/dotfiles/.config/nix#arabica
+  # flake.lock の入力を更新する (反映は drs)
+  - name: nix flake update
+    keyword: nfu
+    snippet: nix flake update --flake ~/dotfiles/.config/nix
 
 completions:
   # Tab (zeno-completion) で fzf から選ぶ補完
