@@ -155,12 +155,128 @@ local function customize_details()
   end
 end
 
+-- lnum を含む本文/コメントの範囲 (octo が extmark で管理している範囲)
+---@param lnum integer
+---@return integer first, integer last
+local function region(lnum)
+  local buffer = require("octo.utils").get_current_buffer()
+  local ns = require("octo.constants").OCTO_COMMENT_NS
+  if buffer then
+    local metas = { buffer.bodyMetadata }
+    vim.list_extend(metas, buffer.commentsMetadata or {})
+    for _, m in ipairs(metas) do
+      if m and m.extmark then
+        local mark = vim.api.nvim_buf_get_extmark_by_id(0, ns, m.extmark, { details = true })
+        if mark[1] then
+          local s, e = mark[1] + 1, mark[3].end_row + 1
+          if s + 1 <= lnum and lnum <= e - 2 then
+            return s + 1, e - 2
+          end
+        end
+      end
+    end
+  end
+  return 1, vim.fn.line("$")
+end
+
+-- lnum が属する見出しセクションの範囲 (見出し行, 最終行)。見出しがなければ nil
+---@param lnum integer
+---@return integer?, integer?
+local function heading_section(lnum)
+  local first, last = region(lnum)
+  vim.treesitter.get_parser(0):parse()
+  local node = vim.treesitter.get_node({ pos = { lnum - 1, vim.fn.indent(lnum) }, ignore_injections = true })
+  while node and node:type() ~= "section" do
+    node = node:parent()
+  end
+  -- 別のコメントの見出しから続いているセクションは対象外
+  if not node or node:start() + 1 < first then
+    return
+  end
+  local start = node:start() + 1
+  local _, _, end_row, end_col = node:range()
+  local stop = math.min(end_col == 0 and end_row or end_row + 1, last)
+  while stop > start and vim.fn.getline(stop):match("^%s*$") do
+    stop = stop - 1
+  end
+  if stop > start then
+    return start, stop
+  end
+end
+
+-- lnum を含む一番内側の <details> の範囲
+---@param lnum integer
+---@return integer?, integer?
+local function details_block(lnum)
+  local first, last = region(lnum)
+  local lines = vim.api.nvim_buf_get_lines(0, first - 1, last, false)
+  local s, e
+  for _, b in ipairs(require("octo.folds").parse_details_blocks(lines, first)) do
+    if b.open_line <= lnum and lnum <= b.close_line and (not s or b.open_line > s) then
+      s, e = b.open_line, b.close_line
+    end
+  end
+  return s, e
+end
+
+-- za をカーソル行が属する見出しセクション単位で開閉する (octo の fold はコメント単位なので全体が閉じてしまう)
+-- <details> の中ではこれまで通り <details> を開閉する
+local function toggle_heading_fold()
+  local lnum = vim.fn.line(".")
+  if vim.fn.foldclosed(lnum) ~= -1 then
+    return vim.cmd("normal! za")
+  end
+
+  local start, stop = heading_section(lnum)
+  local ds = details_block(lnum)
+  if not start or (ds and ds > start) then
+    return vim.cmd("normal! za")
+  end
+
+  -- 以前作った見出しの fold が開いていれば閉じる。違う fold が閉じたら戻して新しく作る
+  if pcall(vim.cmd, "normal! zc") then
+    if vim.fn.foldclosed(lnum) == start and vim.fn.foldclosedend(lnum) == stop then
+      return
+    end
+    vim.cmd("normal! zo")
+  end
+  vim.cmd(("%d,%dfold"):format(start, stop))
+end
+
+-- octo の foldtext は自分の作った fold 以外だと行頭の空白しか返さず「0」と表示されるので、見出しの fold を表示する
+local function customize_foldtext()
+  local folds = require("octo.folds")
+  local foldtext_for = folds.foldtext_for
+  folds.foldtext_for = function(buf, lnum)
+    local line = vim.api.nvim_buf_get_lines(buf, lnum - 1, lnum, false)[1] or ""
+    local indent, hashes, text = line:match("^(%s*)(#+)%s+(.*)$")
+    if not hashes then
+      return foldtext_for(buf, lnum)
+    end
+    local count = ("  (%d lines)"):format(vim.v.foldend - vim.v.foldstart + 1)
+    return {
+      { indent, "Normal" },
+      { "▶ ", "OctoDetailsSummary" },
+      { text, ("@markup.heading.%d.markdown"):format(math.min(#hashes, 6)) },
+      { count, "Comment" },
+    }
+  end
+end
+
 return {
   {
     "pwntester/octo.nvim",
     config = function(_, opts)
       require("octo").setup(opts)
       customize_details()
+      customize_foldtext()
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("octo_heading_fold", { clear = true }),
+        pattern = "octo",
+        callback = function(ev)
+          vim.keymap.set("n", "za", toggle_heading_fold, { buffer = ev.buf, desc = "Toggle fold (heading section)" })
+        end,
+      })
     end,
   },
 }
