@@ -1,8 +1,8 @@
 return {
   {
     "MeanderingProgrammer/render-markdown.nvim",
-    -- snacks.gh の issue/PR バッファ (filetype = markdown.gh) でもレンダリングする
+    -- snacks.gh (markdown.gh) と octo の issue/PR バッファでもレンダリングする
     -- file_types 未指定時は lazy の ft が使われ、ft は LazyVim の定義に追加される
-    ft = { "markdown.gh" },
+    ft = { "markdown.gh", "octo" },
   },
 }
