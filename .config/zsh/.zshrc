@@ -50,6 +50,11 @@ autoload -Uz copy-earlier-word
 zle -N copy-earlier-word
 bindkey '^[,' copy-earlier-word
 
+# Esc→e で編集中のコマンドラインを $EDITOR で開く
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey '^[e' edit-command-line
+
 # C-g で ghq 管理のリポジトリを fzf で選んで移動する
 function ghq-fzf() {
   local src=$(ghq list | fzf --preview "bat --color=always --style=header,grid --line-range :80 $(ghq root)/{}/README.*")
