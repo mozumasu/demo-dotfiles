@@ -8,5 +8,12 @@ return {
       ["<Tab>"] = { "select_and_accept", "snippet_forward", "fallback" },
       ["<S-Tab>"] = { "snippet_backward", "fallback" },
     },
+    cmdline = {
+      keymap = {
+        -- メニュー表示中は ↑↓ で候補を選択し、非表示時はコマンド履歴の移動にフォールバックする
+        ["<Up>"] = { "select_prev", "fallback" },
+        ["<Down>"] = { "select_next", "fallback" },
+      },
+    },
   },
 }
