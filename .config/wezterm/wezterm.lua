@@ -68,7 +68,7 @@ config.use_ime = true
 -- 二重に動作してしまう (SHIFTも漢字変換確定で必要なため含める)
 config.macos_forward_to_ime_modifier_mask = "SHIFT|CTRL"
 
-config.font = wezterm.font("JetBrains Mono")
+config.font = wezterm.font_with_fallback({ "JetBrains Mono", "HackGen Console NF" })
 config.font_size = 18.0
 
 -- 背景を透過
