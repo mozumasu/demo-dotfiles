@@ -132,6 +132,8 @@ in
       }
     ) (lib.filterAttrs (_: type: type == "directory") (builtins.readDir skillsDir))
     // {
+      ".claude/rules".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/claude/rules";
       # 応答が英語主体なら差し戻す Stop hook。/usr/bin/python3 は Xcode CLT のスタブなので nix の python3 で起動する
       ".claude/hooks/japanese-guard".source = pkgs.writeShellScript "japanese-guard" ''
         exec ${lib.getExe pkgs.python3} ${claude-code-japanese-guard}/hooks/japanese-guard.py "$@"
