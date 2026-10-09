@@ -211,6 +211,8 @@
     yazi
     # タスクランナー
     just
+    # バックグラウンドプロセス管理 (Claude Code のバックグラウンド実行に使う。rules/background-process.md)
+    skanehira-ghost
     # Docker
     lazydocker
     # Kubernetes

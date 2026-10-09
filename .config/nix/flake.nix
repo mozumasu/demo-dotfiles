@@ -61,6 +61,10 @@
 
             nixpkgs.overlays = [
               llm-agents.overlays.shared-nixpkgs
+              # nixpkgs にないパッケージ
+              (final: prev: {
+                skanehira-ghost = final.callPackage ./packages/ghost.nix { };
+              })
             ];
           }
           home-manager.darwinModules.home-manager
