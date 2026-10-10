@@ -73,8 +73,16 @@ bindkey '^g' ghq-fzf
 # z でよく行くディレクトリに移動する (zi で fzf から選ぶ)
 eval "$(zoxide init zsh)"
 
+# fzf: C-t でファイル選択、M-c でディレクトリ移動、`**<Tab>` で fzf 補完
+# zeno が後から ^i と ^r を上書きするので、zeno より前に読み込む
+if (( $+commands[fzf] )); then
+  source <(fzf --zsh)
+fi
+
 # zeno.zsh: abbrev スニペット展開と fzf 補完 (設定は ~/.config/zeno/config.yml)
 export ZENO_HOME="$HOME/.config/zeno"
+# zeno の補完パターンにマッチしない Tab は fzf の補完 (`**<Tab>` など) に回す
+export ZENO_COMPLETION_FALLBACK=fzf-completion
 if [[ -r "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins/zeno/zeno.zsh" ]]; then
   source "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins/zeno/zeno.zsh"
 fi
