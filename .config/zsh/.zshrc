@@ -4,6 +4,10 @@ alias ll='ls -l'
 # ssh でログインしたときは転送されてきた agent を使いたいので上書きしない
 [[ -z $SSH_CONNECTION && -S ~/.ssh/agent.sock ]] && export SSH_AUTH_SOCK=~/.ssh/agent.sock
 
+# Claude Code は画像 (kitty graphics の Unicode プレースホルダー) を描くターミナルを名前 (kitty / ghostty) で判定する。
+# herdr は XTVERSION に libghostty と答えるため対象外になり、mod の Image が alt になるので herdr の中では強制的に有効にする
+[[ -n $HERDR_ENV ]] && export CLAUDE_CODE_FORCE_TERMINAL_IMAGES=1
+
 # fzf の入力欄を上に置き、候補を上から並べる (zeno の補完や zi なども同じ並びになる)
 export FZF_DEFAULT_OPTS='--layout=reverse'
 
