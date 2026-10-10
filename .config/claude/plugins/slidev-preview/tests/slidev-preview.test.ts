@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { bmpToCells, isSlidevArg, outDirFor, parseServerUrl, parseTaskId, rankDecks, serverName, sortSlides } from '../hooks/register'
+import { bmpToCells, isSlidevArg, outDirFor, parseServerUrl, parseTaskId, rankDecks, serverName, slidevTaskLines, sortSlides } from '../hooks/register'
 
 test('sortSlides keeps numbered PNGs in slide order', async () => {
   expect(sortSlides(['10.png', '2.png', '1.png', 'notes.txt', 'a.png'])).toEqual(['1.png', '2.png', '10.png'])
@@ -66,4 +66,15 @@ test('parseTaskId reads ghost run output', async () => {
   expect(parseTaskId('Started background process:\n  Task ID: 55c32b75-8813-4721-abb3-fd2adc2af1bc\n')).toBe(
     '55c32b75-8813-4721-abb3-fd2adc2af1bc',
   )
+})
+
+test('slidevTaskLines keeps dev servers and skips the portless proxy', async () => {
+  const list = [
+    'Task ID                              PID      Status     Started              Command                        Directory',
+    '----------',
+    '11111111-1111-1111-1111-111111111111 1        running    2026-10-10 06:42     portless 2026-10-terminal-ni   /x/talk',
+    '22222222-2222-2222-2222-222222222222 2        running    2026-10-10 06:42     portless proxy start --port 13 /x',
+    '33333333-3333-3333-3333-333333333333 3        running    2026-10-10 06:42     sleep 30                       /tmp',
+  ].join('\n')
+  expect(slidevTaskLines(list).map(l => l.slice(0, 8))).toEqual(['11111111'])
 })

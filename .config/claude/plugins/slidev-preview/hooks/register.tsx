@@ -353,10 +353,34 @@ const startServer = async ($: EngineInterface, deckPath: string) => {
   }
 }
 
-const stopServer = async ($: EngineInterface) => {
+// ghost list の行のうち、slidev の dev サーバーのもの (portless のプロキシは残す)
+export const slidevTaskLines = (list: string) =>
+  list
+    .split('\n')
+    .filter(l => /^[0-9a-f-]{36}\s/.test(l) && /slidev|portless/.test(l) && !/portless proxy/.test(l))
+
+const stopTask = async ($: EngineInterface, taskId: string) => (await run($, ['ghost', 'stop', taskId])).exitCode === 0
+
+// 指定したデッキのサーバーを止める。別セッションで起動したものも ghost list から探す
+const stopServer = async ($: EngineInterface, deckPath?: string) => {
   const current = await read($, server)
-  if (current.taskId) await run($, ['ghost', 'stop', current.taskId])
+  const path = deckPath ?? current.deckPath
+  const taskId =
+    (current.deckPath === path && current.taskId) || (path ? await findRunningTask($, dirOf(path)) : undefined)
+  const stopped = taskId ? await stopTask($, taskId) : false
+  if (!deckPath || current.deckPath === path) await update($, server, () => NO_SERVER)
+  return stopped
+}
+
+const stopAllServers = async ($: EngineInterface) => {
+  const lines = slidevTaskLines((await run($, ['ghost', 'list', '-s', 'running'])).stdout)
+  let count = 0
+  for (const line of lines) {
+    const taskId = line.slice(0, 36)
+    if (await stopTask($, taskId)) count++
+  }
   await update($, server, () => NO_SERVER)
+  return count
 }
 
 const scheduleServer = ($: EngineInterface, deckPath: string) => {
@@ -374,6 +398,11 @@ export const register: Register = on => {
       name: 'slidev-browser',
       description: 'Serve a Slidev deck with ghost (+ portless) and open it in the browser',
       argumentHint: '[path/to/slides.md]',
+    })
+    await $.command.register({
+      name: 'slidev-stop',
+      description: 'Stop the Slidev dev server started by /slidev-browser',
+      argumentHint: '[path/to/slides.md | all]',
     })
     await detectImageSupport($).catch(() => undefined)
     // エディタ等、Claude 以外による編集も拾う
@@ -411,6 +440,18 @@ export const register: Register = on => {
     return { text: `${baseOf(path)} の dev サーバーを ghost で起動し、ブラウザで開きます…` }
   })
 
+  on('command.run', { command: 'slidev-stop' }, async ($, e) => {
+    const arg = e.args.trim()
+    if (arg === 'all') {
+      const count = await stopAllServers($)
+      return { text: count ? `Slidev の dev サーバーを ${count} 個止めました。` : '動いている Slidev の dev サーバーはありません。' }
+    }
+    const cwd = await $.session.cwd()
+    const path = arg ? (arg.startsWith('/') ? arg : `${cwd}/${arg}`) : (await read($, server)).deckPath || (await read($, deck)).path
+    if (!path) return { text: '止めるデッキを指定してください (/slidev-stop slides.md か all)。' }
+    return { text: (await stopServer($, path)) ? `${baseOf(path)} の dev サーバーを止めました。` : `${path} の dev サーバーは動いていません。` }
+  })
+
   on('tool.call', { tool: 'Edit' }, async ($, e, next) => {
     const ran = await next(e)
     if (ran.deny === undefined && ran.isError !== true) await followEdit($, e.file_path).catch(() => undefined)
@@ -424,7 +465,7 @@ export const register: Register = on => {
 
   on('prompt.autocomplete', async ($, e, next) => {
     const ran = await next(e)
-    if (!isSlidevArg(e.text, e.start) && !/^\s*\/slidev-browser\s+$/.test(e.text.slice(0, e.start))) return ran
+    if (!isSlidevArg(e.text, e.start) && !/^\s*\/slidev-(?:browser|stop)\s+$/.test(e.text.slice(0, e.start))) return ran
     const files = await listMarkdown($, await $.session.cwd()).catch(() => [])
     const mine = rankDecks(files, e.token).map(file => ({ text: file, description: 'Slidev deck' }))
     return { suggestions: [...mine, ...ran.suggestions] }
@@ -483,7 +524,7 @@ export const register: Register = on => {
           <Button label="Next" hotkey="j" plain onPress={() => move(1)} />
           <Button label="Reload" hotkey="r" plain onPress={() => scheduleExport($)} />
           <Button label="Browser" hotkey="b" plain onPress={() => scheduleServer($, current.path)} />
-          {web.status !== 'stopped' && <Button label="Stop" hotkey="s" plain onPress={() => stopServer($)} />}
+          {web.status !== 'stopped' && <Button label="Stop" hotkey="s" plain onPress={() => void stopServer($)} />}
           {status && <Text color={current.status === 'error' ? 'red' : 'yellow'}>{status}</Text>}
         </Box>
         {web.status === 'starting' && <Text color="yellow">dev サーバーを起動中…</Text>}
