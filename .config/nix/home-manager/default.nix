@@ -11,6 +11,7 @@
   imports = [
     ./aerospace.nix
     ./claude.nix
+    ./ghostty.nix
     ./git.nix
   ];
   home.username = "mozumasu";
