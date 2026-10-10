@@ -15,6 +15,8 @@ in
     settings = {
       # OS のライト/ダークモードに追従して切り替わる。テーマ名の一覧は `ghostty +list-themes`
       theme = "light:iTerm2 Solarized Light,dark:Solarized Dark Patched";
+      # Solarized Dark の文字色 (灰色) は透過した背景の上だと薄く見えるので白にする
+      foreground = "#ffffff";
 
       font-family = "HackGen Console NF";
       font-size = 13;
@@ -32,8 +34,8 @@ in
       window-padding-y = 2;
       window-padding-balance = true;
 
-      # タブをタイトルバーに統合する
-      macos-titlebar-style = "tabs";
+      # タイトルバーと信号機ボタンを消して角丸の枠だけにする (Ghostty のタブバーも出なくなる)
+      macos-titlebar-style = "hidden";
 
       # キーバインドは .config/wezterm/wezterm.lua に合わせる
       # Leader (C-;) はキーシーケンス (ctrl+semicolon>x) で再現する
