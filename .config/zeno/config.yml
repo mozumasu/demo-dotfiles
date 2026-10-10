@@ -12,6 +12,9 @@ snippets:
   - name: lazygit
     keyword: lg
     snippet: lazygit
+  - name: cd project root
+    keyword: proot
+    snippet: 'cd $(git rev-parse --show-toplevel)'
   - name: claude
     keyword: c
     snippet: claude
