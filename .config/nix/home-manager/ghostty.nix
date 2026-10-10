@@ -50,11 +50,11 @@ in
         "ctrl+semicolon>shift+tab=previous_tab"
         # IME 経由だと C-q の 1 回目が消えるので、herdr の prefix 用に ^Q を直接送る
         "ctrl+q=text:\\x11"
-        # Cmd+t: new_tab
-        (csiU "super+t" (lib.strings.charToInt "t") 9)
-        # Ctrl+Tab / Ctrl+Shift+Tab: next_tab / previous_tab
-        (csiU "ctrl+tab" 9 5)
-        (csiU "ctrl+shift+tab" 9 6)
+        # Cmd+t (new_tab) / Ctrl+Tab / Ctrl+Shift+Tab (next_tab / previous_tab) は Ghostty の既定の割り当てを外し、
+        # herdr が有効にする kitty キーボードプロトコルで届ける。CSI u を固定で送ると herdr の外で文字化けするため
+        "super+t=unbind"
+        "ctrl+tab=unbind"
+        "ctrl+shift+tab=unbind"
         # Cmd+Ctrl+p / Cmd+Ctrl+n: previous_agent / next_agent
         # (Karabiner で Cmd+↑ / Cmd+↓ に変換されて届くので、矢印キーの修飾付き形式で送る)
         "super+arrow_up=text:\\x1b[1;9A"
@@ -62,8 +62,8 @@ in
         # Shift+Backspace: focus_pane_left
         (csiU "shift+backspace" 127 2)
       ]
-      # Cmd+1..9: switch_tab
-      ++ map (d: csiU "super+${d}" (lib.strings.charToInt d) 9) digits
+      # Cmd+1..9 (switch_tab) も同じく kitty キーボードプロトコルに任せる
+      ++ map (d: "super+${d}=unbind") digits
       # Ctrl+Shift+j/k/l: focus_pane_down/up/right, Ctrl+Shift+z: zoom
       ++ map (c: csiU "ctrl+shift+${c}" (lib.strings.charToInt c) 6) [
         "j"
