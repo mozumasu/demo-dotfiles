@@ -17,7 +17,6 @@
       "colima"
       "docker" # colima は実行環境だけなので CLI を別に入れる
       "sheldon"
-      "herdr"
     ];
     casks = [
       "homerow"
