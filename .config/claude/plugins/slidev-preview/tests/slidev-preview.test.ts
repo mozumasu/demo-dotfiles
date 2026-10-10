@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { bmpToCells, isSlidevArg, outDirFor, rankDecks, sortSlides } from '../hooks/register'
+import { bmpToCells, isSlidevArg, outDirFor, parseServerUrl, parseTaskId, rankDecks, serverName, sortSlides } from '../hooks/register'
 
 test('sortSlides keeps numbered PNGs in slide order', async () => {
   expect(sortSlides(['10.png', '2.png', '1.png', 'notes.txt', 'a.png'])).toEqual(['1.png', '2.png', '10.png'])
@@ -49,4 +49,21 @@ test('bmpToCells draws a flat block with fg equal to bg', async () => {
   view.setInt32(22, -2, true)
   view.setUint16(28, 24, true)
   expect(Array.from(bmpToCells(bmp, 1, 1))).toEqual([0x2580, 0x808080, 0x808080])
+})
+
+test('serverName slugs the deck directory', async () => {
+  expect(serverName('/x/slides/2026-10-terminal-night-3/slides.md')).toBe('2026-10-terminal-night-3')
+  expect(serverName('/x/My Talk!/slides.md')).toBe('my-talk')
+})
+
+test('parseServerUrl prefers the portless route', async () => {
+  expect(parseServerUrl('-> https://talk.localhost:1355\n  http://localhost:4123/')).toBe('https://talk.localhost:1355')
+  expect(parseServerUrl('  public slide show   > http://localhost:3030/')).toBe('http://localhost:3030')
+  expect(parseServerUrl('starting...')).toBeUndefined()
+})
+
+test('parseTaskId reads ghost run output', async () => {
+  expect(parseTaskId('Started background process:\n  Task ID: 55c32b75-8813-4721-abb3-fd2adc2af1bc\n')).toBe(
+    '55c32b75-8813-4721-abb3-fd2adc2af1bc',
+  )
 })

@@ -9,8 +9,16 @@ export type Deck = {
   start: number
 }
 
+export type Server = {
+  deckPath: string
+  taskId: string
+  url: string
+  status: 'stopped' | 'starting' | 'running' | 'error'
+  error: string
+}
+
 declare module 'claude-code' {
   interface PluginState {
-    'slidev-preview': { deck: Deck; rasterTick: number }
+    'slidev-preview': { deck: Deck; rasterTick: number; server: Server }
   }
 }

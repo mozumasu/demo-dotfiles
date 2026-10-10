@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import type { Deck } from '../types'
+import type { Deck, Server } from '../types'
 
 const PANE = 'slidev-preview'
 const EMPTY: Deck = {
@@ -17,6 +17,8 @@ const EMPTY: Deck = {
 const deck = atom({ plugin: 'slidev-preview', key: 'deck' } as const, EMPTY)
 // Raster の変換が終わるたびに増やして、ペインを描き直す
 const rasterTick = atom({ plugin: 'slidev-preview', key: 'rasterTick' } as const, 0)
+const NO_SERVER: Server = { deckPath: '', taskId: '', url: '', status: 'stopped', error: '' }
+const server = atom({ plugin: 'slidev-preview', key: 'server' } as const, NO_SERVER)
 
 // export 中に再度変更されたら、終わった後にもう一度 export する
 let isExporting = false
@@ -243,11 +245,128 @@ const followEdit = async ($: EngineInterface, filePath: string) => {
   if (current.path && filePath === current.path) scheduleExport($)
 }
 
+// ---- ブラウザ用の dev サーバー (ghost で常駐させ、portless があれば https://<name>.localhost にする)
+
+export const serverName = (deckPath: string) =>
+  baseOf(dirOf(deckPath))
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'slidev'
+
+export const parseTaskId = (text: string) => text.match(/Task ID:\s*([0-9a-f-]{36})/)?.[1]
+
+// portless のルート (https://<name>.localhost[:1355]) を優先し、なければ Slidev が出す localhost の URL
+export const parseServerUrl = (log: string) =>
+  log.match(/https?:\/\/[a-z0-9.-]+\.localhost(?::\d+)?/i)?.[0] ??
+  log.match(/http:\/\/(?:localhost|127\.0\.0\.1):\d+/)?.[0]
+
+const run = ($: EngineInterface, argv: string[], cwd?: string) =>
+  $.process.run(argv, { cwd, timeoutMs: 15_000 }).catch(() => ({ exitCode: 1, stdout: '', stderr: '' }))
+
+const isTaskRunning = async ($: EngineInterface, taskId: string) =>
+  taskId !== '' && /Status:\s*running/.test((await run($, ['ghost', 'status', taskId])).stdout)
+
+// 別セッションが同じデッキで起動したサーバーも拾って多重起動しない
+const findRunningTask = async ($: EngineInterface, deckDir: string) => {
+  const list = (await run($, ['ghost', 'list', '-s', 'running'])).stdout
+  // Command 列は 30 文字で切れるので、portless 経由だと slidev が見えない。ディレクトリで判定する
+  const line = list.split('\n').find(l => /slidev|portless/.test(l) && l.trimEnd().endsWith(deckDir))
+  return line?.match(/^([0-9a-f-]{36})/)?.[1]
+}
+
+const hasPortless = async ($: EngineInterface) => (await run($, ['sh', '-c', 'command -v portless'])).exitCode === 0
+
+// マシン再起動後はプロキシが落ちているので、sudo 不要の 1355 番で起こす
+const ensurePortlessProxy = async ($: EngineInterface) => {
+  if ((await run($, ['portless', 'list'])).exitCode === 0) return
+  const list = (await run($, ['ghost', 'list', '-s', 'running'])).stdout
+  if (!/portless proxy/.test(list)) await run($, ['ghost', 'run', '--', 'portless', 'proxy', 'start', '--port', '1355', '--https'])
+  await $.clock.sleep(1500)
+}
+
+// 起動・ルート登録の確認は curl ではなく portless list とログで行う
+const portlessUrl = async ($: EngineInterface, name: string) => {
+  const list = await run($, ['portless', 'list'])
+  if (list.exitCode !== 0 || !list.stdout.includes(`${name}.localhost`)) return undefined
+  const got = await run($, ['portless', 'get', name])
+  return got.exitCode === 0 ? parseServerUrl(got.stdout) : parseServerUrl(list.stdout)
+}
+
+const waitForUrl = async ($: EngineInterface, taskId: string, name?: string) => {
+  for (let i = 0; i < 60; i++) {
+    const log = (await run($, ['ghost', 'log', taskId])).stdout
+    // portless 経由は Slidev のログにも localhost:<割当ポート> が出るので、ルートの登録を待つ
+    const url = name ? await portlessUrl($, name) : parseServerUrl(log)
+    if (url) return { url }
+    if (!(await isTaskRunning($, taskId))) return { error: log.trim().split('\n').slice(-8).join('\n') || '起動に失敗しました。' }
+    await $.clock.sleep(1000)
+  }
+  return { error: '60 秒待っても URL が出ませんでした。' }
+}
+
+const startServer = async ($: EngineInterface, deckPath: string) => {
+  const deckDir = dirOf(deckPath)
+  const current = await read($, server)
+  if (current.status === 'starting') return
+  if (current.deckPath === deckPath && current.url && (await isTaskRunning($, current.taskId))) {
+    await run($, ['open', current.url])
+    return
+  }
+  await update($, server, () => ({ ...NO_SERVER, deckPath, status: 'starting' }))
+  try {
+    const name = serverName(deckPath)
+    const usePortless = await hasPortless($)
+    if (usePortless) await ensurePortlessProxy($)
+    let taskId = await findRunningTask($, deckDir)
+    // 同名のルートがあれば (別セッションや手で起動したもの) それを開く
+    const existing = usePortless ? await portlessUrl($, name) : undefined
+    if (existing) {
+      await update($, server, s => ({ ...s, taskId: taskId ?? '', url: existing, status: 'running' }))
+      await run($, ['open', existing])
+      return
+    }
+    if (!taskId) {
+      const local = `${deckDir}/node_modules/.bin/slidev`
+      const slidev = (await $.fs.exists(local)) ? local : 'npx --no-install slidev'
+      // Slidev は PORT を読まないので --port で渡す。portless は IPv4 に繋ぐので 127.0.0.1 で待ち受ける
+      const dev = `${slidev} ${JSON.stringify(baseOf(deckPath))} --port \${PORT:-3030} --remote --bind 127.0.0.1`
+      const argv = usePortless ? ['portless', name, 'sh', '-c', dev] : ['sh', '-c', dev]
+      const started = await run($, ['ghost', 'run', '-c', deckDir, '--', ...argv])
+      taskId = parseTaskId(started.stdout)
+      if (!taskId) throw new Error(`ghost run に失敗しました: ${started.stderr || started.stdout}`)
+    }
+    const found = await waitForUrl($, taskId, usePortless ? name : undefined)
+    if (!found.url) {
+      await update($, server, s => ({ ...s, taskId: taskId ?? '', status: 'error', error: found.error ?? '' }))
+      return
+    }
+    await update($, server, s => ({ ...s, taskId: taskId ?? '', url: found.url ?? '', status: 'running' }))
+    await run($, ['open', found.url])
+  } catch (err) {
+    await update($, server, s => ({ ...s, status: 'error', error: String(err) }))
+  }
+}
+
+const stopServer = async ($: EngineInterface) => {
+  const current = await read($, server)
+  if (current.taskId) await run($, ['ghost', 'stop', current.taskId])
+  await update($, server, () => NO_SERVER)
+}
+
+const scheduleServer = ($: EngineInterface, deckPath: string) => {
+  $.clock.after(0, () => void startServer($, deckPath))
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'slidev',
       description: 'Preview a Slidev deck as images in a pane',
+      argumentHint: '[path/to/slides.md]',
+    })
+    await $.command.register({
+      name: 'slidev-browser',
+      description: 'Serve a Slidev deck with ghost (+ portless) and open it in the browser',
       argumentHint: '[path/to/slides.md]',
     })
     await detectImageSupport($).catch(() => undefined)
@@ -277,6 +396,15 @@ export const register: Register = on => {
     return { text: `${baseOf(path)} を Slidev Preview で開きました (export 中…)。` }
   })
 
+  on('command.run', { command: 'slidev-browser' }, async ($, e) => {
+    const arg = e.args.trim() || (await read($, deck)).path || 'slides.md'
+    const cwd = await $.session.cwd()
+    const path = arg.startsWith('/') ? arg : `${cwd}/${arg}`
+    if (!(await $.fs.exists(path))) return { text: `${path} がありません。` }
+    scheduleServer($, path)
+    return { text: `${baseOf(path)} の dev サーバーを ghost で起動し、ブラウザで開きます…` }
+  })
+
   on('tool.call', { tool: 'Edit' }, async ($, e, next) => {
     const ran = await next(e)
     if (ran.deny === undefined && ran.isError !== true) await followEdit($, e.file_path).catch(() => undefined)
@@ -290,7 +418,7 @@ export const register: Register = on => {
 
   on('prompt.autocomplete', async ($, e, next) => {
     const ran = await next(e)
-    if (!isSlidevArg(e.text, e.start)) return ran
+    if (!isSlidevArg(e.text, e.start) && !/^\s*\/slidev-browser\s+$/.test(e.text.slice(0, e.start))) return ran
     const files = await listMarkdown($, await $.session.cwd()).catch(() => [])
     const mine = rankDecks(files, e.token).map(file => ({ text: file, description: 'Slidev deck' }))
     return { suggestions: [...mine, ...ran.suggestions] }
@@ -299,6 +427,7 @@ export const register: Register = on => {
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text, Button, Image, Raster } = $.ui.resolve(e)
     const current = await read($, deck)
+    const web = await read($, server)
     await read($, rasterTick)
     if (!current.path) return <Text dimColor>/slidev [slides.md] でデッキを開いてください。</Text>
 
@@ -347,8 +476,13 @@ export const register: Register = on => {
           <Button label="Prev" hotkey="k" plain onPress={() => move(-1)} />
           <Button label="Next" hotkey="j" plain onPress={() => move(1)} />
           <Button label="Reload" hotkey="r" plain onPress={() => scheduleExport($)} />
+          <Button label="Browser" hotkey="b" plain onPress={() => scheduleServer($, current.path)} />
+          {web.status !== 'stopped' && <Button label="Stop" hotkey="s" plain onPress={() => stopServer($)} />}
           {status && <Text color={current.status === 'error' ? 'red' : 'yellow'}>{status}</Text>}
         </Box>
+        {web.status === 'starting' && <Text color="yellow">dev サーバーを起動中…</Text>}
+        {web.status === 'running' && <Text color="green">{web.url}</Text>}
+        {web.status === 'error' && <Text color="red">{web.error}</Text>}
         {current.status === 'error' && <Text color="red">{current.error}</Text>}
         {total === 0 && current.status !== 'error' && <Text dimColor>export 中…</Text>}
         {shown.map((name, i) => (
