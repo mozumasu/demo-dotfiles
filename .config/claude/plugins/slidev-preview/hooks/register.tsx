@@ -70,9 +70,13 @@ const listMarkdown = async ($: EngineInterface, cwd: string) => {
 // $.ui.blit が断ってきたら (alt を描いている) セルで描く
 let imageMode: 'image' | 'raster' | 'probe' = 'probe'
 let isProbing = false
+// セル表示にした理由 (ペインに薄く出す)
+let imageReason = ''
+let terminalName = ''
 
 const detectImageSupport = async ($: EngineInterface) => {
   const ran = await $.process.run(['sh', '-c', 'printf "%s %s" "$TERM_PROGRAM" "$TERM"'])
+  terminalName = ran.stdout.trim()
   imageMode = /ghostty|kitty/i.test(ran.stdout) ? 'image' : 'probe'
 }
 
@@ -83,8 +87,10 @@ const probeImage = async ($: EngineInterface, key: string, file: string, columns
     await $.clock.sleep(300)
     const result = await $.ui.blit({ requestId: PANE, key, source: { file, format: 'png' }, columns, rows })
     imageMode = result.deny === undefined ? 'image' : 'raster'
-  } catch {
+    imageReason = result.deny ?? ''
+  } catch (err) {
     imageMode = 'raster'
+    imageReason = String(err)
   } finally {
     isProbing = false
     await update($, rasterTick, n => n + 1)
@@ -483,6 +489,11 @@ export const register: Register = on => {
         {web.status === 'starting' && <Text color="yellow">dev サーバーを起動中…</Text>}
         {web.status === 'running' && <Text color="green">{web.url}</Text>}
         {web.status === 'error' && <Text color="red">{web.error}</Text>}
+        {imageMode === 'raster' && (
+          <Text dimColor wrap="truncate-end">
+            セル表示 ({terminalName || '?'}): {imageReason || '画像を描けません'}
+          </Text>
+        )}
         {current.status === 'error' && <Text color="red">{current.error}</Text>}
         {total === 0 && current.status !== 'error' && <Text dimColor>export 中…</Text>}
         {shown.map((name, i) => (
