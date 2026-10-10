@@ -11,6 +11,6 @@ export type Deck = {
 
 declare module 'claude-code' {
   interface PluginState {
-    'slidev-preview': { deck: Deck }
+    'slidev-preview': { deck: Deck; rasterTick: number }
   }
 }

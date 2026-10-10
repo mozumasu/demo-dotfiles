@@ -18,6 +18,10 @@
   home.homeDirectory = "/Users/mozumasu";
   home.stateVersion = "24.11";
   programs.home-manager.enable = true;
+  # nix で入れた .app を ~/Applications/Home Manager Apps に置く。stateVersion 24.11 の既定はシンボリックリンク (linkApps) で
+  # Spotlight や Raycast が拾わないので、実体をコピーする (25.11 以降の既定と同じ)
+  targets.darwin.linkApps.enable = false;
+  targets.darwin.copyApps.enable = true;
   programs.ssh = {
     enable = true;
     # 旧デフォルト値の自動挿入を止める (将来 deprecated 予定。付けないと警告が出る)

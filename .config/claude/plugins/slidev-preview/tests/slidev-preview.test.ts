@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { isSlidevArg, outDirFor, rankDecks, sortSlides } from '../hooks/register'
+import { bmpToCells, isSlidevArg, outDirFor, rankDecks, sortSlides } from '../hooks/register'
 
 test('sortSlides keeps numbered PNGs in slide order', async () => {
   expect(sortSlides(['10.png', '2.png', '1.png', 'notes.txt', 'a.png'])).toEqual(['1.png', '2.png', '10.png'])
@@ -26,4 +26,27 @@ test('rankDecks puts slides.md first and filters by token', async () => {
     'docs/a.md',
   ])
   expect(rankDecks(['talk/slides.md', 'README.md'], 'talk')).toEqual(['talk/slides.md'])
+})
+
+test('bmpToCells picks a quadrant glyph and two colors per 2x2 block', async () => {
+  // 2x2, 24bit, top-down の BMP。左上だけ赤、残りは白
+  const bmp = new Uint8Array(54 + 16)
+  const view = new DataView(bmp.buffer)
+  view.setUint32(10, 54, true)
+  view.setInt32(18, 2, true)
+  view.setInt32(22, -2, true)
+  view.setUint16(28, 24, true)
+  bmp.set([0, 0, 255, 255, 255, 255, 0, 0], 54)
+  bmp.set([255, 255, 255, 255, 255, 255, 0, 0], 62)
+  expect(Array.from(bmpToCells(bmp, 1, 1))).toEqual([0x2598, 0xff0000, 0xffffff])
+})
+
+test('bmpToCells draws a flat block with fg equal to bg', async () => {
+  const bmp = new Uint8Array(54 + 16).fill(0x80, 54)
+  const view = new DataView(bmp.buffer)
+  view.setUint32(10, 54, true)
+  view.setInt32(18, 2, true)
+  view.setInt32(22, -2, true)
+  view.setUint16(28, 24, true)
+  expect(Array.from(bmpToCells(bmp, 1, 1))).toEqual([0x2580, 0x808080, 0x808080])
 })
