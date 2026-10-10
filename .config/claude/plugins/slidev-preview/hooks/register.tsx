@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { EngineInterface, Register, Timer } from 'claude-code'
 
 import type { Deck, Server } from '../types'
 
@@ -200,7 +200,9 @@ const exportDeck = async ($: EngineInterface): Promise<void> => {
   try {
     const stat = await $.fs.stat(current.path)
     await update($, deck, d => ({ ...d, status: 'exporting', error: '', mtimeMs: stat.mtimeMs }))
-    await $.process.run(['rm', '-rf', current.outDir])
+    // 書き出し中も前の画像を見せ続けるため、別のディレクトリに書き出して終わってから入れ替える
+    const next = `${current.outDir}.next`
+    await $.process.run(['rm', '-rf', next])
     // プロジェクトに入っている slidev を優先し、なければ npx で探す
     const local = `${dirOf(current.path)}/node_modules/.bin/slidev`
     const slidev = (await $.fs.exists(local)) ? [local] : ['npx', '--no-install', 'slidev']
@@ -212,19 +214,22 @@ const exportDeck = async ($: EngineInterface): Promise<void> => {
         '--format',
         'png',
         '--output',
-        current.outDir,
+        next,
         '--timeout',
         '60000',
       ],
       { cwd: dirOf(current.path), timeoutMs: 300_000, env: { CI: '1' } },
     )
-    const entries = await $.fs.list(current.outDir).catch(() => [])
+    const entries = await $.fs.list(next).catch(() => [])
     const slides = sortSlides(entries.filter(entry => entry.kind === 'file').map(entry => entry.name))
     if (ran.exitCode !== 0 || slides.length === 0) {
+      await $.process.run(['rm', '-rf', next])
       const log = `${ran.stderr}\n${ran.stdout}`.trim().split('\n').slice(-8).join('\n')
       await update($, deck, d => ({ ...d, status: 'error', error: log || 'PNG が出力されませんでした。' }))
       return
     }
+    const prev = `${current.outDir}.prev`
+    await $.process.run(['sh', '-c', 'rm -rf "$2" && { [ ! -e "$1" ] || mv "$1" "$2"; } && mv "$3" "$1" && rm -rf "$2"', 'swap', current.outDir, prev, next])
     rasters.clear()
     await update($, deck, d => ({
       ...d,
@@ -241,14 +246,21 @@ const exportDeck = async ($: EngineInterface): Promise<void> => {
   }
 }
 
-// hook の dispatch から切り離して export する
-const scheduleExport = ($: EngineInterface) => {
-  $.clock.after(0, () => void exportDeck($))
+// hook の dispatch から切り離して export する。編集が続くときは最後の編集から delay ms 待つ
+const EDIT_DEBOUNCE_MS = 800
+let pendingExport: Timer | undefined
+
+const scheduleExport = ($: EngineInterface, delay = 0) => {
+  pendingExport?.cancel()
+  pendingExport = $.clock.after(delay, () => {
+    pendingExport = undefined
+    void exportDeck($)
+  })
 }
 
 const followEdit = async ($: EngineInterface, filePath: string) => {
   const current = await read($, deck)
-  if (current.path && filePath === current.path) scheduleExport($)
+  if (current.path && filePath === current.path) scheduleExport($, EDIT_DEBOUNCE_MS)
 }
 
 // ---- ブラウザ用の dev サーバー (ghost で常駐させ、portless があれば https://<name>.localhost にする)
@@ -410,7 +422,7 @@ export const register: Register = on => {
       const current = await read($, deck)
       if (!current.path || isExporting) return
       const stat = await $.fs.stat(current.path).catch(() => undefined)
-      if (stat && stat.mtimeMs !== current.mtimeMs) scheduleExport($)
+      if (stat && stat.mtimeMs !== current.mtimeMs) scheduleExport($, EDIT_DEBOUNCE_MS)
     })
 
     return next(e)
