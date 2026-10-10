@@ -32,7 +32,7 @@ end
 ---@field fm_title? string frontmatter の title
 ---@field text? string 最初の本文 (HTML タグは除く)
 
----@type table<integer, { tick: integer, folds: table<integer, SlidevSlide>, separators: table<integer, true> }>
+---@type table<integer, { tick: integer, slides: SlidevSlide[], folds: table<integer, SlidevSlide>, separators: table<integer, true> }>
 local slide_cache = {}
 
 ---@param buf integer
@@ -101,7 +101,7 @@ local function parse_slides(buf)
       separators[slide.start] = true
     end
   end
-  cache = { tick = tick, folds = folds, separators = separators }
+  cache = { tick = tick, slides = slides, folds = folds, separators = separators }
   slide_cache[buf] = cache
   return cache
 end
@@ -123,6 +123,43 @@ function _G.slidev_foldtext()
   }
 end
 
+-- スライドの一覧を picker で出し、選んだスライドへジャンプする。最初はカーソルのあるスライドを選んだ状態で開く
+---@param buf integer
+local function pick_slides(buf)
+  local slides = parse_slides(buf).slides
+  local cursor = vim.api.nvim_win_get_cursor(0)[1]
+  local last = vim.api.nvim_buf_line_count(buf)
+  local file = vim.api.nvim_buf_get_name(buf)
+  local items = {} ---@type snacks.picker.finder.Item[]
+  local current = 1
+  for _, slide in ipairs(slides) do
+    if slide.start <= cursor then
+      current = slide.index
+    end
+    items[#items + 1] = {
+      text = ("%d %s"):format(slide.index, slide.title),
+      slide = slide,
+      buf = buf,
+      file = file,
+      pos = { math.min(slide.fold_start, last), 0 },
+    }
+  end
+  Snacks.picker.pick({
+    title = "Slides",
+    items = items,
+    format = function(item)
+      return {
+        { ("%3d. "):format(item.slide.index), "Number" },
+        { item.slide.title, "Title" },
+      }
+    end,
+    sort = { fields = { "score:desc", "idx" } },
+    on_show = function(picker)
+      picker.list:view(current)
+    end,
+  })
+end
+
 vim.api.nvim_create_autocmd("FileType", {
   group = vim.api.nvim_create_augroup("slidev_fold", { clear = true }),
   pattern = "markdown",
@@ -133,6 +170,9 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.opt_local.foldmethod = "expr"
     vim.opt_local.foldexpr = "v:lua.slidev_foldexpr()"
     vim.opt_local.foldtext = "v:lua.slidev_foldtext()"
+    vim.keymap.set("n", "<localleader>s", function()
+      pick_slides(ev.buf)
+    end, { buffer = ev.buf, desc = "Slidev Slides" })
     vim.api.nvim_create_autocmd("BufWipeout", {
       buffer = ev.buf,
       once = true,
