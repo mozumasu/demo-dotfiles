@@ -220,6 +220,8 @@
     just
     # バックグラウンドプロセス管理 (Claude Code のバックグラウンド実行に使う。rules/background-process.md)
     skanehira-ghost
+    # dev サーバーに https://<name>.localhost の固定 URL を割り当てる (ghost と組み合わせる。rules/background-process.md)
+    portless
     # Docker
     lazydocker
     # Kubernetes

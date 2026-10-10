@@ -64,6 +64,7 @@
               # nixpkgs にないパッケージ
               (final: prev: {
                 skanehira-ghost = final.callPackage ./packages/ghost.nix { };
+                portless = final.callPackage ./packages/portless.nix { };
               })
             ];
           }
