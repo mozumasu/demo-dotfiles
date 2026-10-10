@@ -1,0 +1,6 @@
+{
+  "name": "slidev-preview",
+  "version": "0.1.0",
+  "description": "Preview a Slidev deck as images in a pane",
+  "types": "./types/index.d.ts"
+}

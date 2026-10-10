@@ -3,6 +3,9 @@
   "theme": "dark",
   "language": "ja",
   "outputStyle": "Concise",
+  "env": {
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/dotfiles/.config/claude/plugins/slidev-preview"
+  },
   "extraKnownMarketplaces": {
     "claude-community": {
       "source": {
