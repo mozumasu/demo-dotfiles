@@ -3,6 +3,8 @@ export type Deck = {
   outDir: string
   slides: string[]
   generation: number
+  // ページごとの書き出し回数。変わったページの画像だけ読み直す
+  versions: number[]
   mtimeMs: number
   status: 'idle' | 'exporting' | 'error'
   error: string

@@ -9,6 +9,7 @@ const EMPTY: Deck = {
   outDir: '',
   slides: [],
   generation: 0,
+  versions: [],
   mtimeMs: 0,
   status: 'idle',
   error: '',
@@ -167,13 +168,20 @@ const toBase64 = (words: Uint32Array) =>
 const fromBase64 = (base64: string) =>
   (Uint8Array as unknown as { fromBase64: (s: string) => Uint8Array }).fromBase64(base64)
 
-// key: `${generation}:${slide}:${columns}` -> Raster の cells
+// key: `${version}:${slide}:${columns}` -> Raster の cells (version はページごとの書き出し回数)
 const rasters = new Map<string, string>()
 const converting = new Set<string>()
-const rasterKey = (generation: number, name: string, columns: number) => `${generation}:${name}:${columns}`
+const rasterKey = (version: number, name: string, columns: number) => `${version}:${name}:${columns}`
 
-const convertSlide = async ($: EngineInterface, current: Deck, name: string, columns: number, rows: number) => {
-  const key = rasterKey(current.generation, name, columns)
+const convertSlide = async (
+  $: EngineInterface,
+  current: Deck,
+  name: string,
+  version: number,
+  columns: number,
+  rows: number,
+) => {
+  const key = rasterKey(version, name, columns)
   if (rasters.has(key) || converting.has(key)) return
   converting.add(key)
   try {
@@ -188,6 +196,100 @@ const convertSlide = async ($: EngineInterface, current: Deck, name: string, col
   }
 }
 
+// ---- ページ単位の差分書き出し
+
+// @slidev/parser の parseSync と同じ規則で slides.md をページごとの原文に分ける
+// (--- で区切り、直後が空行でなければ次の --- までを frontmatter とみなす。コードブロックと HTML コメントの中は区切らない)
+export const splitSlides = (markdown: string): string[] => {
+  const lines = markdown.split(/\r?\n/g)
+  const slides: string[] = []
+  let start = 0
+  let inHtmlComment = false
+  const advanceComment = (line: string, inside: boolean) => {
+    let cursor = 0
+    while (cursor < line.length) {
+      if (inside) {
+        const end = line.indexOf('-->', cursor)
+        if (end < 0) return true
+        inside = false
+        cursor = end + 3
+      } else {
+        const open = line.indexOf('<!--', cursor)
+        if (open < 0) return false
+        const end = line.indexOf('-->', open + 4)
+        if (end < 0) return true
+        cursor = end + 3
+      }
+    }
+    return inside
+  }
+  const slice = (end: number) => {
+    if (start === end) return
+    slides.push(lines.slice(start, end).join('\n'))
+    start = end + 1
+  }
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i] ?? ''
+    const line = rawLine.trimEnd()
+    if (inHtmlComment) {
+      inHtmlComment = advanceComment(rawLine, true)
+      continue
+    }
+    if (line.startsWith('---')) {
+      slice(i)
+      if (line[3] !== '-' && lines[i + 1]?.trim()) {
+        start = i
+        for (i += 1; i < lines.length; i++) if ((lines[i] ?? '').trimEnd() === '---') break
+      }
+    } else if (line.trimStart().startsWith('```')) {
+      const fence = line.match(/^\s*`+/)?.[0] ?? '```'
+      let j = i + 1
+      for (; j < lines.length; j++) if ((lines[j] ?? '').startsWith(fence)) break
+      if (j !== lines.length) i = j
+    } else inHtmlComment = advanceComment(rawLine, false)
+  }
+  if (start <= lines.length - 1) slice(lines.length)
+  return slides
+}
+
+// 書き出し直すページ (1 始まり)。undefined は全ページを書き出す
+// ページ数が変わった、先頭 (全体設定) が変わった、ページ番号がずれうる設定 (src / hide / disabled) がある、
+// 半分以上変わった、のどれかなら全部書き出す
+export const changedPages = (before: string[] | undefined, after: string[]): number[] | undefined => {
+  if (!before || before.length !== after.length || before[0] !== after[0]) return undefined
+  if (after.some(raw => /^(?:src|hide|disabled)\s*:/m.test(raw.split(/\n---\s*$/m)[0] ?? ''))) return undefined
+  const pages = after.flatMap((raw, i) => (raw === before[i] ? [] : [i + 1]))
+  return pages.length > after.length / 2 ? undefined : pages
+}
+
+// 前回書き出したときのページの原文 (デッキのパスごと)
+const exportedSlides = new Map<string, string[]>()
+
+const slidevCommand = async ($: EngineInterface, deckPath: string) => {
+  const local = `${dirOf(deckPath)}/node_modules/.bin/slidev`
+  return (await $.fs.exists(local)) ? [local] : ['npx', '--no-install', 'slidev']
+}
+
+const runExport = async ($: EngineInterface, deckPath: string, output: string, range?: number[]) =>
+  $.process.run(
+    [
+      ...(await slidevCommand($, deckPath)),
+      'export',
+      baseOf(deckPath),
+      '--format',
+      'png',
+      '--output',
+      output,
+      '--timeout',
+      '60000',
+      ...(range ? ['--range', range.join(',')] : []),
+    ],
+    { cwd: dirOf(deckPath), timeoutMs: 300_000, env: { CI: '1' } },
+  )
+
+const listPngs = async ($: EngineInterface, dir: string) =>
+  sortSlides((await $.fs.list(dir).catch(() => [])).filter(entry => entry.kind === 'file').map(entry => entry.name))
+
 const exportDeck = async ($: EngineInterface): Promise<void> => {
   const current = await read($, deck)
   if (!current.path) return
@@ -197,48 +299,61 @@ const exportDeck = async ($: EngineInterface): Promise<void> => {
   }
   isExporting = true
   isDirty = false
+  const next = `${current.outDir}.next`
+  const part = `${current.outDir}.part`
   try {
     const stat = await $.fs.stat(current.path)
+    const source = splitSlides(await $.fs.read(current.path))
+    const before = current.slides.length > 0 ? exportedSlides.get(current.path) : undefined
+    const pages = changedPages(before, source)
+    if (pages?.length === 0) {
+      // 中身が変わっていない (保存しただけ等)
+      await update($, deck, d => ({ ...d, mtimeMs: stat.mtimeMs }))
+      return
+    }
     await update($, deck, d => ({ ...d, status: 'exporting', error: '', mtimeMs: stat.mtimeMs }))
     // 書き出し中も前の画像を見せ続けるため、別のディレクトリに書き出して終わってから入れ替える
-    const next = `${current.outDir}.next`
-    await $.process.run(['rm', '-rf', next])
-    // プロジェクトに入っている slidev を優先し、なければ npx で探す
-    const local = `${dirOf(current.path)}/node_modules/.bin/slidev`
-    const slidev = (await $.fs.exists(local)) ? [local] : ['npx', '--no-install', 'slidev']
-    const ran = await $.process.run(
-      [
-        ...slidev,
-        'export',
-        baseOf(current.path),
-        '--format',
-        'png',
-        '--output',
-        next,
-        '--timeout',
-        '60000',
-      ],
-      { cwd: dirOf(current.path), timeoutMs: 300_000, env: { CI: '1' } },
-    )
-    const entries = await $.fs.list(next).catch(() => [])
-    const slides = sortSlides(entries.filter(entry => entry.kind === 'file').map(entry => entry.name))
-    if (ran.exitCode !== 0 || slides.length === 0) {
-      await $.process.run(['rm', '-rf', next])
-      const log = `${ran.stderr}\n${ran.stdout}`.trim().split('\n').slice(-8).join('\n')
+    await $.process.run(['rm', '-rf', next, part])
+    let ran
+    let isPartial = false
+    if (pages) {
+      // 変わったページだけ書き出し、前回の画像の写しに上書きする (APFS なら cp -c で複製は一瞬)
+      ran = await runExport($, current.path, part, pages)
+      if (ran.exitCode === 0 && (await listPngs($, part)).length === pages.length) {
+        const copied = await $.process.run([
+          'sh',
+          '-c',
+          '{ cp -cR "$1" "$2" 2>/dev/null || cp -R "$1" "$2"; } && cp "$3"/*.png "$2"/',
+          'copy',
+          current.outDir,
+          next,
+          part,
+        ])
+        isPartial = copied.exitCode === 0
+      }
+      if (!isPartial) await $.process.run(['rm', '-rf', next])
+    }
+    // 差分で書き出せなかったときも全ページで書き出し直す
+    if (!isPartial) ran = await runExport($, current.path, next)
+    const slides = await listPngs($, next)
+    if (!ran || ran.exitCode !== 0 || slides.length === 0) {
+      await $.process.run(['rm', '-rf', next, part])
+      const log = ran ? `${ran.stderr}\n${ran.stdout}`.trim().split('\n').slice(-8).join('\n') : ''
       await update($, deck, d => ({ ...d, status: 'error', error: log || 'PNG が出力されませんでした。' }))
       return
     }
     const prev = `${current.outDir}.prev`
-    await $.process.run(['sh', '-c', 'rm -rf "$2" && { [ ! -e "$1" ] || mv "$1" "$2"; } && mv "$3" "$1" && rm -rf "$2"', 'swap', current.outDir, prev, next])
-    rasters.clear()
-    await update($, deck, d => ({
-      ...d,
-      status: 'idle',
-      slides,
-      generation: d.generation + 1,
-      start: Math.min(d.start, slides.length - 1),
-    }))
+    await $.process.run(['sh', '-c', 'rm -rf "$2" "$4" && { [ ! -e "$1" ] || mv "$1" "$2"; } && mv "$3" "$1" && rm -rf "$2"', 'swap', current.outDir, prev, next, part])
+    exportedSlides.set(current.path, source)
+    if (!isPartial) rasters.clear()
+    await update($, deck, d => {
+      const generation = d.generation + 1
+      // 書き出したページだけ版を上げ、画像の読み直しとセル表示の変換をそのページに絞る
+      const versions = slides.map((_, i) => (isPartial && !pages?.includes(i + 1) ? (d.versions[i] ?? generation) : generation))
+      return { ...d, status: 'idle', slides, generation, versions, start: Math.min(d.start, slides.length - 1) }
+    })
   } catch (err) {
+    await $.process.run(['rm', '-rf', next, part]).catch(() => undefined)
     await update($, deck, d => ({ ...d, status: 'error', error: String(err) }))
   } finally {
     isExporting = false
@@ -503,6 +618,7 @@ export const register: Register = on => {
     const status =
       current.status === 'exporting' ? 'exporting…' : current.status === 'error' ? 'error' : ''
 
+    const version = (index: number) => current.versions[index] ?? current.generation
     const slide = (name: string, index: number) => {
       if (imageMode !== 'raster') {
         if (imageMode === 'probe') {
@@ -512,16 +628,16 @@ export const register: Register = on => {
         return (
           <Image
             key={`slide-${index}`}
-            source={{ file: `${current.outDir}/${name}`, format: 'png', generation: current.generation }}
+            source={{ file: `${current.outDir}/${name}`, format: 'png', generation: version(index) }}
             columns={columns}
             rows={rows}
             alt={`slide ${index + 1}`}
           />
         )
       }
-      const cells = rasters.get(rasterKey(current.generation, name, columns))
+      const cells = rasters.get(rasterKey(version(index), name, columns))
       if (!cells) {
-        $.clock.after(0, () => void convertSlide($, current, name, columns, rows).catch(() => undefined))
+        $.clock.after(0, () => void convertSlide($, current, name, version(index), columns, rows).catch(() => undefined))
         return <Text dimColor>変換中…</Text>
       }
       return <Raster key={`slide-${index}`} columns={columns} rows={rows} cells={cells} />

@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { bmpToCells, isSlidevArg, outDirFor, parseServerUrl, parseTaskId, rankDecks, serverName, slidevTaskLines, sortSlides } from '../hooks/register'
+import { bmpToCells, changedPages, isSlidevArg, outDirFor, parseServerUrl, parseTaskId, rankDecks, serverName, slidevTaskLines, sortSlides, splitSlides } from '../hooks/register'
 
 test('sortSlides keeps numbered PNGs in slide order', async () => {
   expect(sortSlides(['10.png', '2.png', '1.png', 'notes.txt', 'a.png'])).toEqual(['1.png', '2.png', '10.png'])
@@ -77,4 +77,43 @@ test('slidevTaskLines keeps dev servers and skips the portless proxy', async () 
     '33333333-3333-3333-3333-333333333333 3        running    2026-10-10 06:42     sleep 30                       /tmp',
   ].join('\n')
   expect(slidevTaskLines(list).map(l => l.slice(0, 8))).toEqual(['11111111'])
+})
+
+test('splitSlides follows the Slidev parser', async () => {
+  const md = [
+    '---',
+    'theme: default',
+    '---',
+    '# One',
+    '',
+    '---',
+    'layout: center',
+    '---',
+    '# Two',
+    '```yaml',
+    '---',
+    '```',
+    '',
+    '---',
+    '',
+    '# Three <!-- a',
+    '---',
+    '-->',
+  ].join('\n')
+  const slides = splitSlides(md)
+  expect(slides.length).toBe(3)
+  expect(slides[1]).toContain('layout: center')
+  expect(slides[1]).toContain('```yaml')
+  expect(slides[2]).toContain('# Three')
+})
+
+test('changedPages returns only the edited pages or undefined for a full export', async () => {
+  const a = ['head', 'one', 'two', 'three', 'four']
+  expect(changedPages(a, ['head', 'one', 'TWO', 'three', 'four'])).toEqual([3])
+  expect(changedPages(a, a)).toEqual([])
+  expect(changedPages(undefined, a)).toBeUndefined()
+  expect(changedPages(a, ['head', 'one', 'two', 'three'])).toBeUndefined()
+  expect(changedPages(a, ['HEAD', 'one', 'two', 'three', 'four'])).toBeUndefined()
+  expect(changedPages(a, ['head', 'X', 'Y', 'Z', 'four'])).toBeUndefined()
+  expect(changedPages(a, ['head', '---\nhide: true\n---\none', 'two', 'three', 'four'])).toBeUndefined()
 })
