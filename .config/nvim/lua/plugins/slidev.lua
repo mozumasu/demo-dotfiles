@@ -42,7 +42,25 @@ return {
       linters = {
         ["markdownlint-cli2"] = {
           condition = function(ctx)
-            return not is_slidev(ctx.dirname)
+            if is_slidev(ctx.dirname) then
+              return false
+            end
+            -- stdin で lint するため設定ファイルは nvim の cwd からしか探されない。
+            -- 編集中ファイルから上に辿って見つかった設定ファイルのディレクトリで実行する
+            local config = vim.fs.find({
+              ".markdownlint-cli2.jsonc",
+              ".markdownlint-cli2.yaml",
+              ".markdownlint-cli2.cjs",
+              ".markdownlint-cli2.mjs",
+              ".markdownlint.jsonc",
+              ".markdownlint.json",
+              ".markdownlint.yaml",
+              ".markdownlint.yml",
+              ".markdownlint.cjs",
+              ".markdownlint.mjs",
+            }, { upward = true, path = ctx.dirname })[1]
+            require("lint").linters["markdownlint-cli2"].cwd = config and vim.fs.dirname(config) or nil
+            return true
           end,
         },
       },
