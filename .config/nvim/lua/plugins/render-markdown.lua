@@ -33,6 +33,10 @@ return {
         -- 見出しとして塗られたうえ区切りの --- が隠れてしまうので setext 見出しは描画しない
         setext = false,
       },
+      html = {
+        -- 既定では <!-- --> のコメントが隠れて、コメントアウトした内容が見えなくなる
+        comment = { conceal = false },
+      },
       custom_handlers = {
         markdown = { extends = true, parse = parse_setext_underline },
       },
