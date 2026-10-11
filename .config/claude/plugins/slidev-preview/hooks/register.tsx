@@ -452,6 +452,12 @@ const openPane = async ($: EngineInterface, focus = false) => {
   scheduleExport($)
 }
 
+// 自分の $.ui.close は自分の ui.close hook を通らないので、ここで閉じたことを記録する
+const closePane = async ($: EngineInterface) => {
+  await $.ui.close({ id: PANE })
+  await update($, paneClosed, () => true)
+}
+
 const followEdit = async ($: EngineInterface, filePath: string) => {
   const current = await read($, deck)
   if (current.path && (filePath === current.path || watched.includes(filePath))) scheduleExport($, EDIT_DEBOUNCE_MS)
@@ -658,6 +664,7 @@ export const register: Register = on => {
     return { text: (await stopServer($, path)) ? `${baseOf(path)} の dev サーバーを止めました。` : `${path} の dev サーバーは動いていません。` }
   })
 
+  // ctrl+x x や閉じるマークで閉じたとき
   on('ui.close', { id: PANE }, async ($, e, next) => {
     const ran = await next(e)
     await update($, paneClosed, () => true).catch(() => undefined)
@@ -789,7 +796,7 @@ export const register: Register = on => {
           {web.status !== 'stopped' && (
             <Button label="Stop" hotkey="s" plain dimColor={!isFocused} onPress={() => void stopServer($)} />
           )}
-          <Button label="Close" hotkey="q" plain dimColor={!isFocused} onPress={() => void $.ui.close({ id: PANE })} />
+          <Button label="Close" hotkey="q" plain dimColor={!isFocused} onPress={() => void closePane($)} />
           {status && <Text color={current.status === 'error' ? 'red' : 'yellow'}>{status}</Text>}
         </Box>
         {web.status === 'starting' && <Text color="yellow">dev サーバーを起動中…</Text>}

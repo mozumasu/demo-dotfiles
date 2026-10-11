@@ -148,3 +148,47 @@ test('loadSlides expands src imports into pages and lists the imported files', a
   // 解決できない src: が残っている間は全ページを書き出す
   expect(changedPages(loaded.slides, edited)).toBeUndefined()
 })
+
+test('closing the pane with Close shows a band that reopens it', async ($, on) => {
+  const calls: string[] = []
+  let isOpen = false
+  // 帯より下の層 (エンジンの代わり) を答える
+  const answer = on as unknown as (event: string, hook: (_$: unknown, e: { focus?: boolean }) => unknown) => void
+  answer('session.cwd', () => ({ value: '/deck' }))
+  answer('fs.exists', () => ({ value: true }))
+  answer('fs.read', () => ({ value: '# a\n' }))
+  answer('fs.stat', () => ({ value: { mtimeMs: 1 } }))
+  answer('fs.list', () => ({ value: [] }))
+  answer('process.run', () => ({ value: { exitCode: 1, stdout: '', stderr: '' } }))
+  answer('clock.after', () => ({ value: {} }))
+  answer('ui.panes', () => ({ value: isOpen ? [{ id: 'slidev-preview', title: 'Slidev' }] : [] }))
+  answer('ui.open', (_$, e) => {
+    isOpen = true
+    calls.push(e.focus ? 'open focused' : 'open')
+    return { value: { isPlaced: true } }
+  })
+  answer('ui.close', () => {
+    isOpen = false
+    calls.push('close')
+    return { value: undefined }
+  })
+
+  await ($ as unknown as { command: { run: (e: object) => Promise<unknown> } }).command.run({ command: 'slidev', args: 'slides.md' })
+  const pane = await $.ui.mount({
+    plugin: 'slidev-preview',
+    surface: 'terminal',
+    component: 'Pane',
+    requestId: 'slidev-preview',
+    props: { isFocused: true, bodyColumns: 80 } as never,
+  })
+  await pane.press({ key: 'Close' })
+  const band = await $.ui.mount({
+    plugin: 'slidev-preview',
+    surface: 'terminal',
+    component: 'AbovePrompt',
+    props: { hasSurvey: false } as never,
+  })
+  expect(await band.find({ key: 'open' })).toBeDefined()
+  await band.press({ key: 'open' })
+  expect(calls).toEqual(['open', 'close', 'open focused'])
+})
