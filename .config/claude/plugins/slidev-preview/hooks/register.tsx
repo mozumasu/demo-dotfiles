@@ -379,10 +379,10 @@ const exportDeck = async ($: EngineInterface): Promise<void> => {
     const pages = changedPages(before, source)
     if (pages?.length === 0) {
       // 中身が変わっていない (保存しただけ等)
-      await update($, deck, d => ({ ...d, mtimeMs: stat.mtimeMs }))
+      await update($, deck, (d): Deck => ({ ...d, mtimeMs: stat.mtimeMs }))
       return
     }
-    await update($, deck, d => ({ ...d, status: 'exporting', error: '', mtimeMs: stat.mtimeMs }))
+    await update($, deck, (d): Deck => ({ ...d, status: 'exporting', error: '', mtimeMs: stat.mtimeMs }))
     // 書き出し中も前の画像を見せ続けるため、別のディレクトリに書き出して終わってから入れ替える
     await $.process.run(['rm', '-rf', next, part])
     let ran
@@ -410,14 +410,14 @@ const exportDeck = async ($: EngineInterface): Promise<void> => {
     if (!ran || ran.exitCode !== 0 || slides.length === 0) {
       await $.process.run(['rm', '-rf', next, part])
       const log = ran ? `${ran.stderr}\n${ran.stdout}`.trim().split('\n').slice(-8).join('\n') : ''
-      await update($, deck, d => ({ ...d, status: 'error', error: log || 'PNG が出力されませんでした。' }))
+      await update($, deck, (d): Deck => ({ ...d, status: 'error', error: log || 'PNG が出力されませんでした。' }))
       return
     }
     const prev = `${current.outDir}.prev`
     await $.process.run(['sh', '-c', 'rm -rf "$2" "$4" && { [ ! -e "$1" ] || mv "$1" "$2"; } && mv "$3" "$1" && rm -rf "$2"', 'swap', current.outDir, prev, next, part])
     exportedSlides.set(current.path, source)
     if (!isPartial) rasters.clear()
-    await update($, deck, d => {
+    await update($, deck, (d): Deck => {
       const generation = d.generation + 1
       // 書き出したページだけ版を上げ、画像の読み直しとセル表示の変換をそのページに絞る
       const versions = slides.map((_, i) => (isPartial && !pages?.includes(i + 1) ? (d.versions[i] ?? generation) : generation))
@@ -425,7 +425,7 @@ const exportDeck = async ($: EngineInterface): Promise<void> => {
     })
   } catch (err) {
     await $.process.run(['rm', '-rf', next, part]).catch(() => undefined)
-    await update($, deck, d => ({ ...d, status: 'error', error: String(err) }))
+    await update($, deck, (d): Deck => ({ ...d, status: 'error', error: String(err) }))
   } finally {
     isExporting = false
     if (isDirty) $.clock.after(0, () => void exportDeck($))
@@ -525,7 +525,7 @@ const startServer = async ($: EngineInterface, deckPath: string) => {
     // 同名のルートがあれば (別セッションや手で起動したもの) それを開く
     const existing = usePortless ? await portlessUrl($, name) : undefined
     if (existing) {
-      await update($, server, s => ({ ...s, taskId: taskId ?? '', url: existing, status: 'running' }))
+      await update($, server, (s): Server => ({ ...s, taskId: taskId ?? '', url: existing, status: 'running' }))
       await run($, ['open', existing])
       return
     }
@@ -541,13 +541,13 @@ const startServer = async ($: EngineInterface, deckPath: string) => {
     }
     const found = await waitForUrl($, taskId, usePortless ? name : undefined)
     if (!found.url) {
-      await update($, server, s => ({ ...s, taskId: taskId ?? '', status: 'error', error: found.error ?? '' }))
+      await update($, server, (s): Server => ({ ...s, taskId: taskId ?? '', status: 'error', error: found.error ?? '' }))
       return
     }
-    await update($, server, s => ({ ...s, taskId: taskId ?? '', url: found.url ?? '', status: 'running' }))
+    await update($, server, (s): Server => ({ ...s, taskId: taskId ?? '', url: found.url ?? '', status: 'running' }))
     await run($, ['open', found.url])
   } catch (err) {
-    await update($, server, s => ({ ...s, status: 'error', error: String(err) }))
+    await update($, server, (s): Server => ({ ...s, status: 'error', error: String(err) }))
   }
 }
 
@@ -671,6 +671,11 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
+    // Image / Raster があるのはターミナルだけ
+    if (e.surface !== 'terminal') {
+      const { Text } = $.ui.resolve(e)
+      return <Text dimColor>Slidev Preview はターミナルでだけ表示できます。</Text>
+    }
     const { Box, Text, Button, Image, Raster } = $.ui.resolve(e)
     const current = await read($, deck)
     const web = await read($, server)
