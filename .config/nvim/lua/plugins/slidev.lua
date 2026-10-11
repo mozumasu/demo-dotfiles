@@ -31,19 +31,16 @@ end
 ---@field heading? string スライド内の最初の見出し (# / ## …)
 ---@field fm_title? string frontmatter の title
 ---@field text? string 最初の本文 (HTML タグは除く)
+---@field src? string frontmatter の src。このスライドは別ファイルのスライドに置き換わる
 
----@type table<integer, { tick: integer, slides: SlidevSlide[], folds: table<integer, SlidevSlide>, separators: table<integer, true> }>
+---@alias SlidevParsed { tick?: integer, slides: SlidevSlide[], folds: table<integer, SlidevSlide>, separators: table<integer, true> }
+
+---@type table<integer, SlidevParsed>
 local slide_cache = {}
 
----@param buf integer
-local function parse_slides(buf)
-  local tick = vim.api.nvim_buf_get_changedtick(buf)
-  local cache = slide_cache[buf]
-  if cache and cache.tick == tick then
-    return cache
-  end
-
-  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+---@param lines string[]
+---@return SlidevParsed
+local function parse_lines(lines)
   local slides = {} ---@type SlidevSlide[]
   local fence ---@type string?
   local i = 1
@@ -63,7 +60,8 @@ local function parse_slides(buf)
           i = j
           break
         end
-        slide.fm_title = slide.fm_title or lines[j]:match("^title:%s*(.-)%s*$")
+        slide.fm_title = slide.fm_title or lines[j]:match("^title:%s*[\"']?(.-)[\"']?%s*$")
+        slide.src = slide.src or lines[j]:match("^src:%s*[\"']?(.-)[\"']?%s*$")
       end
     end
   end
@@ -95,13 +93,24 @@ local function parse_slides(buf)
   local folds = {} ---@type table<integer, SlidevSlide>
   local separators = {} ---@type table<integer, true>
   for _, slide in ipairs(slides) do
-    slide.title = slide.fm_title or slide.heading or slide.text or ("Slide " .. slide.index)
+    slide.title = slide.fm_title or slide.heading or slide.text or slide.src or ("Slide " .. slide.index)
     folds[slide.fold_start] = slide
     if slide.fold_start ~= slide.start then
       separators[slide.start] = true
     end
   end
-  cache = { tick = tick, slides = slides, folds = folds, separators = separators }
+  return { slides = slides, folds = folds, separators = separators }
+end
+
+---@param buf integer
+local function parse_slides(buf)
+  local tick = vim.api.nvim_buf_get_changedtick(buf)
+  local cache = slide_cache[buf]
+  if cache and cache.tick == tick then
+    return cache
+  end
+  cache = parse_lines(vim.api.nvim_buf_get_lines(buf, 0, -1, false))
+  cache.tick = tick
   slide_cache[buf] = cache
   return cache
 end
@@ -123,25 +132,97 @@ function _G.slidev_foldtext()
   }
 end
 
--- スライドの一覧を picker で出し、選んだスライドへジャンプする。最初はカーソルのあるスライドを選んだ状態で開く
+-- src: で読み込むファイルのパス。読み込むスライドを絞る #2,5-6 のような指定は外す
+---@param file string src を書いたファイル
+---@param src string
+local function resolve_src(file, src)
+  return vim.fs.normalize(vim.fs.joinpath(vim.fs.dirname(file), (src:gsub("#.*$", ""))))
+end
+
+-- 開いているファイルは保存前の内容を使う
+---@param file string
+---@return string[]?
+local function file_lines(file)
+  local buf = vim.fn.bufnr(file)
+  if buf ~= -1 and vim.api.nvim_buf_is_loaded(buf) then
+    return vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  end
+  local ok, lines = pcall(vim.fn.readfile, file)
+  return ok and lines or nil
+end
+
+-- src: を辿って、デッキ全体のスライドを Slidev が並べる順に集める
+---@param file string
+---@param out { file: string, slide: SlidevSlide, last: integer }[]
+---@param stack table<string, true> 読み込み中のファイル。循環した src を辿らないために使う
+local function collect_deck(file, out, stack)
+  local lines = not stack[file] and file_lines(file)
+  if not lines then
+    return out
+  end
+  stack[file] = true
+  for _, slide in ipairs(parse_lines(lines).slides) do
+    if slide.src then
+      collect_deck(resolve_src(file, slide.src), out, stack)
+    else
+      out[#out + 1] = { file = file, slide = slide, last = #lines }
+    end
+  end
+  stack[file] = nil
+  return out
+end
+
+-- カーソルのあるスライドが src: で別ファイルを読み込んでいれば、そのファイルを開く
+---@return boolean 開いたかどうか
+local function goto_src()
+  local buf = vim.api.nvim_get_current_buf()
+  if not vim.b[buf].slidev then
+    return false
+  end
+  local cursor = vim.api.nvim_win_get_cursor(0)[1]
+  local current ---@type SlidevSlide?
+  for _, slide in ipairs(parse_slides(buf).slides) do
+    if slide.start <= cursor then
+      current = slide
+    end
+  end
+  if not (current and current.src) then
+    return false
+  end
+  vim.cmd.edit(vim.fn.fnameescape(resolve_src(vim.api.nvim_buf_get_name(buf), current.src)))
+  return true
+end
+
+-- スライドの一覧を picker で出し、選んだスライドへジャンプする。最初はカーソルのあるスライドを選んだ状態で開く。
+-- src: で分割したデッキは、分割先のファイルから開いても slides.md から辿った全体を出す
 ---@param buf integer
 local function pick_slides(buf)
-  local slides = parse_slides(buf).slides
   local cursor = vim.api.nvim_win_get_cursor(0)[1]
-  local last = vim.api.nvim_buf_line_count(buf)
-  local file = vim.api.nvim_buf_get_name(buf)
+  local file = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
+  local entry = vim.fs.find("slides.md", { upward = true, path = vim.fs.dirname(file) })[1]
+  local deck = entry and collect_deck(vim.fs.normalize(entry), {}, {}) or {}
+  local in_deck = vim.iter(deck):any(function(d)
+    return d.file == file
+  end)
+  if not in_deck then
+    deck = collect_deck(file, {}, {})
+  end
+
   local items = {} ---@type snacks.picker.finder.Item[]
   local current = 1
-  for _, slide in ipairs(slides) do
-    if slide.start <= cursor then
-      current = slide.index
+  local multi = false
+  for index, d in ipairs(deck) do
+    if d.file == file and d.slide.start <= cursor then
+      current = index
     end
+    multi = multi or d.file ~= deck[1].file
     items[#items + 1] = {
-      text = ("%d %s"):format(slide.index, slide.title),
-      slide = slide,
-      buf = buf,
-      file = file,
-      pos = { math.min(slide.fold_start, last), 0 },
+      text = ("%d %s"):format(index, d.slide.title),
+      index = index,
+      title = d.slide.title,
+      buf = d.file == file and buf or nil,
+      file = d.file,
+      pos = { math.min(d.slide.fold_start, d.last), 0 },
     }
   end
   Snacks.picker.pick({
@@ -149,8 +230,9 @@ local function pick_slides(buf)
     items = items,
     format = function(item)
       return {
-        { ("%3d. "):format(item.slide.index), "Number" },
-        { item.slide.title, "Title" },
+        { ("%3d. "):format(item.index), "Number" },
+        { item.title, "Title" },
+        { multi and ("  " .. vim.fs.basename(item.file)) or "", "Comment" },
       }
     end,
     sort = { fields = { "score:desc", "idx" } },
@@ -167,12 +249,19 @@ vim.api.nvim_create_autocmd("FileType", {
     if not is_slidev(vim.fs.dirname(vim.api.nvim_buf_get_name(ev.buf))) then
       return
     end
+    vim.b[ev.buf].slidev = true
     vim.opt_local.foldmethod = "expr"
     vim.opt_local.foldexpr = "v:lua.slidev_foldexpr()"
     vim.opt_local.foldtext = "v:lua.slidev_foldtext()"
     vim.keymap.set("n", "<localleader>s", function()
       pick_slides(ev.buf)
     end, { buffer = ev.buf, desc = "Slidev Slides" })
+    -- LSP が付くと LazyVim の gd に上書きされるので、そちらは下の nvim-lspconfig の keys で同じ動きにする
+    vim.keymap.set("n", "gd", function()
+      if not goto_src() then
+        vim.cmd("normal! gd")
+      end
+    end, { buffer = ev.buf, desc = "Goto Definition / Slidev src" })
     vim.api.nvim_create_autocmd("BufWipeout", {
       buffer = ev.buf,
       once = true,
@@ -184,6 +273,27 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 return {
+  {
+    "neovim/nvim-lspconfig",
+    opts = {
+      servers = {
+        ["*"] = {
+          keys = {
+            {
+              "gd",
+              function()
+                if not goto_src() then
+                  Snacks.picker.lsp_definitions()
+                end
+              end,
+              desc = "Goto Definition",
+              has = "definition",
+            },
+          },
+        },
+      },
+    },
+  },
   {
     "stevearc/conform.nvim",
     opts = function(_, opts)
