@@ -612,6 +612,7 @@ export const register: Register = on => {
     if (!current.path) return <Text dimColor>/slidev [slides.md] でデッキを開いてください。</Text>
 
     const total = current.slides.length
+    const isFocused = e.props.isFocused
     // ペインの本文幅いっぱいに描く
     const columns = Math.max(20, Math.min(200, e.props.bodyColumns || Math.floor((e.viewport?.columns ?? 160) * 0.45)))
     // セルは縦横比 おおよそ 1:2 なので 16:9 のスライドは columns * 9/32 行
@@ -652,21 +653,34 @@ export const register: Register = on => {
     return (
       <Box flexDirection="column">
         <Box flexDirection="row" gap={1}>
-          <Text bold>{baseOf(current.path)}</Text>
+          {/* ホットキーが効くのはフォーカス中だけ。行数は変えず、先頭の印とボタンの濃さで見分ける */}
+          {isFocused ? (
+            <Text inverse bold color="claude">
+              {' FOCUS '}
+            </Text>
+          ) : (
+            <Text dimColor>ctrl+x tab</Text>
+          )}
+          <Text bold={isFocused} dimColor={!isFocused}>
+            {baseOf(current.path)}
+          </Text>
           <Text dimColor>{total} slides</Text>
-          <Button label="Prev" hotkey="k" plain onPress={() => move(-1)} />
-          <Button label="Next" hotkey="j" plain onPress={() => move(1)} />
+          <Button label="Prev" hotkey="k" plain dimColor={!isFocused} onPress={() => move(-1)} />
+          <Button label="Next" hotkey="j" plain dimColor={!isFocused} onPress={() => move(1)} />
           <Button
             label="Reload"
             hotkey="r"
             plain
+            dimColor={!isFocused}
             onPress={() => {
               forceFull = true
               scheduleExport($)
             }}
           />
-          <Button label="Browser" hotkey="b" plain onPress={() => scheduleServer($, current.path)} />
-          {web.status !== 'stopped' && <Button label="Stop" hotkey="s" plain onPress={() => void stopServer($)} />}
+          <Button label="Browser" hotkey="b" plain dimColor={!isFocused} onPress={() => scheduleServer($, current.path)} />
+          {web.status !== 'stopped' && (
+            <Button label="Stop" hotkey="s" plain dimColor={!isFocused} onPress={() => void stopServer($)} />
+          )}
           {status && <Text color={current.status === 'error' ? 'red' : 'yellow'}>{status}</Text>}
         </Box>
         {web.status === 'starting' && <Text color="yellow">dev サーバーを起動中…</Text>}
