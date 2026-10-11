@@ -52,11 +52,15 @@ in
         "ctrl+semicolon>shift+tab=previous_tab"
         # IME 経由だと C-q の 1 回目が消えるので、herdr の prefix 用に ^Q を直接送る
         "ctrl+q=text:\\x11"
-        # Cmd+t (new_tab) / Ctrl+Tab / Ctrl+Shift+Tab (next_tab / previous_tab) は Ghostty の既定の割り当てを外し、
-        # herdr が有効にする kitty キーボードプロトコルで届ける。CSI u を固定で送ると herdr の外で文字化けするため
+        # Cmd+t (new_tab) は Ghostty の既定の割り当てを外し、herdr が有効にする kitty キーボードプロトコルで届ける。
+        # CSI u を固定で送ると herdr の外で文字化けするため
         "super+t=unbind"
-        "ctrl+tab=unbind"
-        "ctrl+shift+tab=unbind"
+        # Ctrl+Tab / Ctrl+Shift+Tab: next_tab / previous_tab
+        # (unbind だと macOS がフォーカス移動のキーとして消費し herdr に届かないので、CSI u を直接送る)
+        (csiU "ctrl+tab" 9 5)
+        (csiU "ctrl+shift+tab" 9 6)
+        # Karabiner が Ctrl+m を Enter に変換するため、Cmd+Ctrl+m が Cmd+Enter (toggle_fullscreen) になるのを防ぐ
+        "super+enter=unbind"
         # Cmd+Ctrl+p / Cmd+Ctrl+n: previous_agent / next_agent
         # (Karabiner で Cmd+↑ / Cmd+↓ に変換されて届くので、矢印キーの修飾付き形式で送る)
         "super+arrow_up=text:\\x1b[1;9A"
