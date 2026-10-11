@@ -354,9 +354,13 @@ const runExport = async ($: EngineInterface, deckPath: string, output: string, r
 const listPngs = async ($: EngineInterface, dir: string) =>
   sortSlides((await $.fs.list(dir).catch(() => [])).filter(entry => entry.kind === 'file').map(entry => entry.name))
 
+// ペインを閉じている間 (Close ボタン / ctrl+x x) は変更の監視も export も止める。
+// /slidev で開き直すと、閉じている間の変更を差分で書き出す
+const isPaneOpen = async ($: EngineInterface) => (await $.ui.panes()).some(pane => pane.id === PANE)
+
 const exportDeck = async ($: EngineInterface): Promise<void> => {
   const current = await read($, deck)
-  if (!current.path) return
+  if (!current.path || !(await isPaneOpen($))) return
   if (isExporting) {
     isDirty = true
     return
@@ -602,7 +606,7 @@ export const register: Register = on => {
     // エディタ等、Claude 以外による編集も拾う
     $.clock.every(2000, async () => {
       const current = await read($, deck)
-      if (!current.path || isExporting) return
+      if (!current.path || isExporting || !(await isPaneOpen($))) return
       const mtimeMs = await latestMtime($, [current.path, ...watched])
       if (mtimeMs !== 0 && mtimeMs !== current.mtimeMs) scheduleExport($, EDIT_DEBOUNCE_MS)
     })
@@ -743,6 +747,7 @@ export const register: Register = on => {
           {web.status !== 'stopped' && (
             <Button label="Stop" hotkey="s" plain dimColor={!isFocused} onPress={() => void stopServer($)} />
           )}
+          <Button label="Close" hotkey="q" plain dimColor={!isFocused} onPress={() => void $.ui.close({ id: PANE })} />
           {status && <Text color={current.status === 'error' ? 'red' : 'yellow'}>{status}</Text>}
         </Box>
         {web.status === 'starting' && <Text color="yellow">dev サーバーを起動中…</Text>}
