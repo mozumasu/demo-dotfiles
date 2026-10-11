@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { bmpToCells, changedPages, isSlidevArg, outDirFor, parseServerUrl, parseTaskId, rankDecks, serverName, slidevTaskLines, sortSlides, splitSlides } from '../hooks/register'
+import { bmpToCells, changedPages, isSlidevArg, loadSlides, outDirFor, parseServerUrl, parseTaskId, rankDecks, resolveSrc, serverName, slidevTaskLines, sortSlides, splitSlides, srcOf } from '../hooks/register'
 
 test('sortSlides keeps numbered PNGs in slide order', async () => {
   expect(sortSlides(['10.png', '2.png', '1.png', 'notes.txt', 'a.png'])).toEqual(['1.png', '2.png', '10.png'])
@@ -116,4 +116,35 @@ test('changedPages returns only the edited pages or undefined for a full export'
   expect(changedPages(a, ['HEAD', 'one', 'two', 'three', 'four'])).toBeUndefined()
   expect(changedPages(a, ['head', 'X', 'Y', 'Z', 'four'])).toBeUndefined()
   expect(changedPages(a, ['head', '---\nhide: true\n---\none', 'two', 'three', 'four'])).toBeUndefined()
+})
+
+test('srcOf reads the src of an importing slide only from its frontmatter', async () => {
+  expect(srcOf('---\nsrc: ./pages/01-intro.md\n---')).toBe('./pages/01-intro.md')
+  expect(srcOf("---\nlayout: cover\nsrc: '/pages/a b.md'\n---\n")).toBe('/pages/a b.md')
+  expect(srcOf('---\nlayout: cover\n---\nsrc: ./not-frontmatter.md')).toBeUndefined()
+  expect(srcOf('# no frontmatter\nsrc: ./x.md')).toBeUndefined()
+})
+
+test('resolveSrc resolves against the importing file, or the deck root for a leading slash', async () => {
+  expect(resolveSrc('/deck', '/deck', './pages/01.md')).toBe('/deck/pages/01.md')
+  expect(resolveSrc('/deck', '/deck/pages', '../shared/a.md')).toBe('/deck/shared/a.md')
+  expect(resolveSrc('/deck', '/deck/pages', '/pages/02.md')).toBe('/deck/pages/02.md')
+})
+
+test('loadSlides expands src imports into pages and lists the imported files', async () => {
+  const disk: Record<string, string> = {
+    '/deck/slides.md': '---\ntheme: x\n---\n\n# Cover\n\n---\nsrc: ./pages/01.md\n---\n\n---\nsrc: ./missing.md\n---\n\n---\n\n# End\n',
+    '/deck/pages/01.md': '---\nlayout: section\n---\n\n# One\n\n---\n\n# Two\n',
+  }
+  const $ = { fs: { read: async (path: string) => disk[path] ?? '', exists: async (path: string) => path in disk } }
+  const loaded = await loadSlides($ as never, '/deck/slides.md', '/deck')
+  expect(loaded.files).toEqual(['/deck/pages/01.md'])
+  expect(loaded.slides.length).toBe(5)
+  expect(loaded.slides[1]).toContain('# One')
+  expect(loaded.slides[2]).toContain('# Two')
+  // 取り込んだページは src: の判定に掛からず、差分で書き出せる
+  const edited = loaded.slides.map((slide, i) => (i === 2 ? `${slide}!` : slide))
+  expect(changedPages(loaded.slides.filter((_, i) => i !== 3), edited.filter((_, i) => i !== 3))).toEqual([3])
+  // 解決できない src: が残っている間は全ページを書き出す
+  expect(changedPages(loaded.slides, edited)).toBeUndefined()
 })

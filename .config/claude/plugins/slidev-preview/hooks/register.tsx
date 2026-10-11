@@ -262,6 +262,66 @@ export const changedPages = (before: string[] | undefined, after: string[]): num
   return pages.length > after.length / 2 ? undefined : pages
 }
 
+// frontmatter の src: (別ファイルのスライドを取り込む指定) のパスを取り出す
+export const srcOf = (raw: string): string | undefined => {
+  if (!raw.startsWith('---')) return undefined
+  const head = raw.split(/\n---\s*$/m)[0] ?? ''
+  return head.match(/^src\s*:\s*(.+?)\s*$/m)?.[1]?.replace(/^(['"])(.*)\1$/, '$2')
+}
+
+// src: のパスを絶対パスにする。/ 始まりはデッキのルートから、それ以外は書いてあるファイルの場所から
+export const resolveSrc = (root: string, dir: string, src: string) => {
+  const parts: string[] = []
+  for (const part of `${src.startsWith('/') ? root : dir}/${src}`.split('/')) {
+    if (part === '..') parts.pop()
+    else if (part !== '' && part !== '.') parts.push(part)
+  }
+  return `/${parts.join('/')}`
+}
+
+// デッキを src: の取り込み先まで展開して、ページごとの原文と取り込んだファイルを返す
+export const loadSlides = async (
+  $: Pick<EngineInterface, 'fs'>,
+  path: string,
+  root: string,
+  seen = new Set<string>(),
+): Promise<{ slides: string[]; files: string[] }> => {
+  seen.add(path)
+  const slides: string[] = []
+  const files: string[] = []
+  for (const raw of splitSlides(await $.fs.read(path))) {
+    const src = srcOf(raw)
+    const target = src ? resolveSrc(root, dirOf(path), src) : undefined
+    // 解決できない src: はそのまま残す (changedPages が全ページの書き出しに倒す)
+    if (!target || seen.has(target) || !(await $.fs.exists(target))) {
+      slides.push(raw)
+      continue
+    }
+    const inner = await loadSlides($, target, root, seen)
+    files.push(target, ...inner.files)
+    // 取り込み元の frontmatter は先頭ページに合成されるので差分に含める
+    // (末尾に付けて、changedPages の src: の判定には掛からないようにする)
+    inner.slides.forEach((slide, i) => slides.push(i === 0 ? `${slide}\n${raw}` : slide))
+  }
+  return { slides, files }
+}
+
+// 開いているデッキが src: で取り込んでいるファイル。slides.md と同じく変更を追う
+let watched: string[] = []
+
+const latestMtime = async ($: EngineInterface, paths: string[]) =>
+  Math.max(
+    0,
+    ...(await Promise.all(
+      paths.map(path =>
+        $.fs
+          .stat(path)
+          .then(stat => stat.mtimeMs)
+          .catch(() => 0),
+      ),
+    )),
+  )
+
 // 前回書き出したときのページの原文 (デッキのパスごと)
 const exportedSlides = new Map<string, string[]>()
 
@@ -308,8 +368,9 @@ const exportDeck = async ($: EngineInterface): Promise<void> => {
   const next = `${current.outDir}.next`
   const part = `${current.outDir}.part`
   try {
-    const stat = await $.fs.stat(current.path)
-    const source = splitSlides(await $.fs.read(current.path))
+    const { slides: source, files } = await loadSlides($, current.path, dirOf(current.path))
+    watched = files
+    const stat = { mtimeMs: await latestMtime($, [current.path, ...files]) }
     const before = !force && current.slides.length > 0 ? exportedSlides.get(current.path) : undefined
     const pages = changedPages(before, source)
     if (pages?.length === 0) {
@@ -381,7 +442,7 @@ const scheduleExport = ($: EngineInterface, delay = 0) => {
 
 const followEdit = async ($: EngineInterface, filePath: string) => {
   const current = await read($, deck)
-  if (current.path && filePath === current.path) scheduleExport($, EDIT_DEBOUNCE_MS)
+  if (current.path && (filePath === current.path || watched.includes(filePath))) scheduleExport($, EDIT_DEBOUNCE_MS)
 }
 
 // ---- ブラウザ用の dev サーバー (ghost で常駐させ、portless があれば https://<name>.localhost にする)
@@ -542,8 +603,8 @@ export const register: Register = on => {
     $.clock.every(2000, async () => {
       const current = await read($, deck)
       if (!current.path || isExporting) return
-      const stat = await $.fs.stat(current.path).catch(() => undefined)
-      if (stat && stat.mtimeMs !== current.mtimeMs) scheduleExport($, EDIT_DEBOUNCE_MS)
+      const mtimeMs = await latestMtime($, [current.path, ...watched])
+      if (mtimeMs !== 0 && mtimeMs !== current.mtimeMs) scheduleExport($, EDIT_DEBOUNCE_MS)
     })
 
     return next(e)
@@ -556,6 +617,7 @@ export const register: Register = on => {
     if (!(await $.fs.exists(path))) return { text: `${path} がありません。` }
     const current = await read($, deck)
     if (current.path !== path) {
+      watched = []
       await update($, deck, () => ({ ...EMPTY, path, outDir: outDirFor(path) }))
     }
     await $.ui.open({ id: PANE, title: 'Slidev' })
