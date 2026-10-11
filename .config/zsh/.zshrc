@@ -62,6 +62,14 @@ bindkey '^[e' edit-command-line
 # Esc→j で次の行を現在の行に連結する (デフォルトの C-x C-j は SKK に C-j を取られて使えない)
 bindkey '^[j' vi-join
 
+# Ghostty が herdr 用に固定で送るキー (Ctrl+Tab など) は、herdr の外だと「9;5u」のような文字として入力されるので無視する
+function ignore-key() { }
+zle -N ignore-key
+for seq in '9;5u' '9;6u' '127;2u' '106;6u' '107;6u' '108;6u' '122;6u' '1;9A' '1;9B'; do
+  bindkey "^[[$seq" ignore-key
+done
+unset seq
+
 # C-g で ghq 管理のリポジトリを fzf で選んで移動する
 function ghq-fzf() {
   local src=$(ghq list | fzf --preview "bat --color=always --style=header,grid --line-range :80 $(ghq root)/{}/README.*")
