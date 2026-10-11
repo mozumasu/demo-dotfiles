@@ -265,6 +265,10 @@ export const changedPages = (before: string[] | undefined, after: string[]): num
 // 前回書き出したときのページの原文 (デッキのパスごと)
 const exportedSlides = new Map<string, string[]>()
 
+// 次の export で差分を見ずに全ページを書き出す。Reload (r) で立てる。
+// テーマ・style.css・画像など slides.md 以外の変更は差分に現れないので、手動の Reload は常に全ページにする
+let forceFull = false
+
 const slidevCommand = async ($: EngineInterface, deckPath: string) => {
   const local = `${dirOf(deckPath)}/node_modules/.bin/slidev`
   return (await $.fs.exists(local)) ? [local] : ['npx', '--no-install', 'slidev']
@@ -299,12 +303,14 @@ const exportDeck = async ($: EngineInterface): Promise<void> => {
   }
   isExporting = true
   isDirty = false
+  const force = forceFull
+  forceFull = false
   const next = `${current.outDir}.next`
   const part = `${current.outDir}.part`
   try {
     const stat = await $.fs.stat(current.path)
     const source = splitSlides(await $.fs.read(current.path))
-    const before = current.slides.length > 0 ? exportedSlides.get(current.path) : undefined
+    const before = !force && current.slides.length > 0 ? exportedSlides.get(current.path) : undefined
     const pages = changedPages(before, source)
     if (pages?.length === 0) {
       // 中身が変わっていない (保存しただけ等)
@@ -650,7 +656,15 @@ export const register: Register = on => {
           <Text dimColor>{total} slides</Text>
           <Button label="Prev" hotkey="k" plain onPress={() => move(-1)} />
           <Button label="Next" hotkey="j" plain onPress={() => move(1)} />
-          <Button label="Reload" hotkey="r" plain onPress={() => scheduleExport($)} />
+          <Button
+            label="Reload"
+            hotkey="r"
+            plain
+            onPress={() => {
+              forceFull = true
+              scheduleExport($)
+            }}
+          />
           <Button label="Browser" hotkey="b" plain onPress={() => scheduleServer($, current.path)} />
           {web.status !== 'stopped' && <Button label="Stop" hotkey="s" plain onPress={() => void stopServer($)} />}
           {status && <Text color={current.status === 'error' ? 'red' : 'yellow'}>{status}</Text>}
