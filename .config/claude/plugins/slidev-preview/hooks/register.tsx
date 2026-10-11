@@ -20,6 +20,8 @@ const deck = atom({ plugin: 'slidev-preview', key: 'deck' } as const, EMPTY)
 const rasterTick = atom({ plugin: 'slidev-preview', key: 'rasterTick' } as const, 0)
 const NO_SERVER: Server = { deckPath: '', taskId: '', url: '', status: 'stopped', error: '' }
 const server = atom({ plugin: 'slidev-preview', key: 'server' } as const, NO_SERVER)
+// ペインを閉じた後、プロンプトの上の帯に開き直すボタンを出す
+const paneClosed = atom({ plugin: 'slidev-preview', key: 'paneClosed' } as const, false)
 
 // export 中に再度変更されたら、終わった後にもう一度 export する
 let isExporting = false
@@ -444,6 +446,12 @@ const scheduleExport = ($: EngineInterface, delay = 0) => {
   })
 }
 
+const openPane = async ($: EngineInterface, focus = false) => {
+  await $.ui.open({ id: PANE, title: 'Slidev', ...(focus ? { focus: true as const } : {}) })
+  await update($, paneClosed, () => false)
+  scheduleExport($)
+}
+
 const followEdit = async ($: EngineInterface, filePath: string) => {
   const current = await read($, deck)
   if (current.path && (filePath === current.path || watched.includes(filePath))) scheduleExport($, EDIT_DEBOUNCE_MS)
@@ -624,8 +632,7 @@ export const register: Register = on => {
       watched = []
       await update($, deck, () => ({ ...EMPTY, path, outDir: outDirFor(path) }))
     }
-    await $.ui.open({ id: PANE, title: 'Slidev' })
-    scheduleExport($)
+    await openPane($)
 
     return { text: `${baseOf(path)} を Slidev Preview で開きました (export 中…)。` }
   })
@@ -649,6 +656,36 @@ export const register: Register = on => {
     const path = arg ? (arg.startsWith('/') ? arg : `${cwd}/${arg}`) : (await read($, server)).deckPath || (await read($, deck)).path
     if (!path) return { text: '止めるデッキを指定してください (/slidev-stop slides.md か all)。' }
     return { text: (await stopServer($, path)) ? `${baseOf(path)} の dev サーバーを止めました。` : `${path} の dev サーバーは動いていません。` }
+  })
+
+  on('ui.close', { id: PANE }, async ($, e, next) => {
+    const ran = await next(e)
+    await update($, paneClosed, () => true).catch(() => undefined)
+    return ran
+  })
+
+  // ペインを閉じている間だけ、開き直すボタンを帯に出す (ctrl+x tab でフォーカスして o)
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    const current = await read($, deck)
+    if (e.props.hasSurvey || !current.path || !(await read($, paneClosed))) return next(e)
+    const { Box, Text, Button } = $.ui.resolve(e)
+    return (
+      <Box flexDirection="row" gap={1}>
+        <Text dimColor>Slidev {baseOf(current.path)} (closed)</Text>
+        <Button key="open" label="Open" hotkey="o" plain onPress={() => void openPane($, true)} />
+        <Button
+          key="dismiss"
+          label="Dismiss"
+          hotkey="x"
+          plain
+          onPress={() => {
+            watched = []
+            void update($, deck, () => EMPTY)
+          }}
+        />
+        <Text dimColor>ctrl+x tab</Text>
+      </Box>
+    )
   })
 
   on('tool.call', { tool: 'Edit' }, async ($, e, next) => {

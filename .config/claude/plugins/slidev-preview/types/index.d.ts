@@ -21,6 +21,6 @@ export type Server = {
 
 declare module 'claude-code' {
   interface PluginState {
-    'slidev-preview': { deck: Deck; rasterTick: number; server: Server }
+    'slidev-preview': { deck: Deck; rasterTick: number; server: Server; paneClosed: boolean }
   }
 }
