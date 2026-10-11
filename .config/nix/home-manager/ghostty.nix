@@ -69,7 +69,9 @@ in
         (csiU "shift+backspace" 127 2)
       ]
       # Cmd+1..9 (switch_tab) も同じく kitty キーボードプロトコルに任せる
+      # (既定の割り当ては super+1 と super+digit_1 の両方にあるので、両方外す)
       ++ map (d: "super+${d}=unbind") digits
+      ++ map (d: "super+digit_${d}=unbind") digits
       # Ctrl+Shift+j/k/l: focus_pane_down/up/right, Ctrl+Shift+z: zoom
       ++ map (c: csiU "ctrl+shift+${c}" (lib.strings.charToInt c) 6) [
         "j"
