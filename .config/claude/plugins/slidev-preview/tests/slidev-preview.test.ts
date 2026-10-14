@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { bmpToCells, changedPages, isSlidevArg, loadSlides, outDirFor, parseServerUrl, parseTaskId, rankDecks, resolveSrc, serverName, slidevTaskLines, sortSlides, splitSlides, srcOf } from '../hooks/register'
+import { bmpToCells, changedPages, isProxyResponding, isSlidevArg, loadSlides, outDirFor, parseServerUrl, parseTaskId, rankDecks, resolveSrc, serverName, slidevTaskLines, sortSlides, splitSlides, srcOf } from '../hooks/register'
 
 test('sortSlides keeps numbered PNGs in slide order', async () => {
   expect(sortSlides(['10.png', '2.png', '1.png', 'notes.txt', 'a.png'])).toEqual(['1.png', '2.png', '10.png'])
@@ -191,4 +191,9 @@ test('closing the pane with Close shows a band that reopens it', async ($, on) =
   expect(await band.find({ key: 'open' })).toBeDefined()
   await band.press({ key: 'open' })
   expect(calls).toEqual(['open', 'close', 'open focused'])
+})
+
+test('isProxyResponding reads portless doctor, not the list exit code', async () => {
+  expect(isProxyResponding('ok    Proxy is responding on port 1355.')).toBe(true)
+  expect(isProxyResponding('warn  Proxy is not running on port 443.')).toBe(false)
 })

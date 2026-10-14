@@ -494,9 +494,12 @@ const findRunningTask = async ($: EngineInterface, deckDir: string) => {
 
 const hasPortless = async ($: EngineInterface) => (await run($, ['sh', '-c', 'command -v portless'])).exitCode === 0
 
+// portless list はプロキシが落ちていても exit 0 なので、doctor の出力で判定する
+export const isProxyResponding = (doctor: string) => /Proxy is responding/.test(doctor)
+
 // マシン再起動後はプロキシが落ちているので、sudo 不要の 1355 番で起こす
 const ensurePortlessProxy = async ($: EngineInterface) => {
-  if ((await run($, ['portless', 'list'])).exitCode === 0) return
+  if (isProxyResponding((await run($, ['portless', 'doctor'])).stdout)) return
   const list = (await run($, ['ghost', 'list', '-s', 'running'])).stdout
   if (!/portless proxy/.test(list)) await run($, ['ghost', 'run', '--', 'portless', 'proxy', 'start', '--port', '1355', '--https'])
   await $.clock.sleep(1500)
