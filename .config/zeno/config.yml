@@ -40,6 +40,12 @@ snippets:
   - name: nix flake update
     keyword: nfu
     snippet: nix flake update --flake ~/dotfiles/.config/nix
+  # コマンドの後ろで G を打つとパイプで grep につなぐ
+  - name: pipe grep
+    keyword: G
+    snippet: '| grep'
+    context:
+      lbuffer: '.+\s'   # カーソルより左に、何か + 空白があるときだけ
 
 completions:
   # Tab (zeno-completion) で fzf から選ぶ補完
