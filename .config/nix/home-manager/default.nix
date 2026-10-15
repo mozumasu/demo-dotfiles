@@ -205,6 +205,9 @@
     deno
     # /usr/bin/python3 は Xcode CLT のスタブで、呼ぶとインストールダイアログが出るため nix 版を先に置く
     python3
+    # zsh 以外のシェル (ログインシェルにはしない)
+    fish
+    nushell
     # treesitter パーサーのビルド用 (Xcode CLT なしで使える C コンパイラ)
     clang
     tree-sitter
