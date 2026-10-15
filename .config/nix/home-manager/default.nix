@@ -27,6 +27,8 @@
     enable = true;
     # 旧デフォルト値の自動挿入を止める (将来 deprecated 予定。付けないと警告が出る)
     enableDefaultConfig = false;
+    # nix 管理外で書き換えたいホスト設定 (検証用 VM 等) は ~/.ssh/config.d/ に置く
+    includes = [ "~/.ssh/config.d/*" ];
     # 属性名が Host / Match で始まらなければ自動で "Host github.com" になる。"*" で Host * のデフォルトも書ける
     settings."github.com" = {
       IdentityFile = "~/.ssh/id_ed25519";
