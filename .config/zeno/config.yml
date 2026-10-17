@@ -56,6 +56,15 @@ completions:
     sourceCommand: "{ gh repo list --limit 1000 --json nameWithOwner -q '.[].nameWithOwner'; gh org list | xargs -P4 -I{} gh repo list {} --limit 1000 --json nameWithOwner -q '.[].nameWithOwner'; } 2>/dev/null"
     options:
       --prompt: "'Repo> '"
+  # ghq get <Tab> → 自分がアクセスできるリポジトリ (自分・コラボレーター・所属 org) を最近 push された順に選ぶ
+  - name: ghq get
+    patterns:
+      - "^ghq get( .*)? $"
+    excludePatterns:
+      - " (--branch|-b|--vcs|--partial) $"
+    sourceCommand: "gh api '/user/repos?affiliation=owner,collaborator,organization_member&sort=pushed&per_page=100' --paginate -q '.[].full_name' 2>/dev/null"
+    options:
+      --prompt: "'Repo> '"
   # 行内の --repo / -R のリポジトリ (なければカレントのリポジトリ) の workflow
   - name: gh workflow
     patterns:
