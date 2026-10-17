@@ -202,6 +202,8 @@
     zoxide
     neovim
     ripgrep
+    # シンタックスハイライト付きの cat (fzf のプレビューなど)
+    bat
     fd
     # zeno.zsh の実行に必要
     deno
@@ -218,6 +220,8 @@
     gh
     ghq
     lazygit
+    # .gitignore のテンプレート (zsh の gi 関数で使う)
+    gibo
     # ファイラー
     yazi
     # ターミナルマルチプレクサ。設定は ~/.config/herdr/config.toml

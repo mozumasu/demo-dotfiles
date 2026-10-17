@@ -1,0 +1,20 @@
+#!/usr/bin/env zsh
+
+# gibo の .gitignore テンプレートを fzf で選んで (Tab で複数選択) カレントの .gitignore に追記する
+# 追記済みのテンプレートは飛ばし、最後に .gitignore を bat で表示する
+local -a names
+names=(${(f)"$(gibo list | fzf --multi --prompt 'gitignore> ' \
+  --preview 'gibo dump {} | bat --color=always --language=gitignore --style=plain')"})
+(( $#names )) || return 0
+
+local name
+for name in $names; do
+  if [[ -f .gitignore ]] && grep -q "/${name}.gitignore\$" .gitignore; then
+    echo "gi: $name は追記済みなので飛ばします" >&2
+    continue
+  fi
+  [[ -s .gitignore ]] && print >> .gitignore
+  gibo dump $name >> .gitignore
+done
+
+bat --language=gitignore .gitignore

@@ -13,7 +13,7 @@ export FZF_DEFAULT_OPTS='--layout=reverse'
 
 # dotfiles/.config/zsh/functions の関数を必要になった時に読み込む
 fpath=("$ZDOTDIR/functions" $fpath)
-autoload -Uz aws-profile cpath kube-clusters
+autoload -Uz aws-profile cpath gi kube-clusters
 
 
 autoload -Uz vcs_info
