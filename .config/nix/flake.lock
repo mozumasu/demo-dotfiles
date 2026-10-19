@@ -277,7 +277,8 @@
         "nix-secrets": "nix-secrets",
         "nixpkgs": "nixpkgs_3",
         "treefmt-nix": "treefmt-nix_2",
-        "zeno": "zeno"
+        "zeno": "zeno",
+        "yomiyasu": "yomiyasu"
       }
     },
     "systems": {
@@ -364,6 +365,22 @@
       "original": {
         "owner": "yuki-yano",
         "repo": "zeno.zsh",
+        "type": "github"
+      }
+    },
+    "yomiyasu": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792377424,
+        "narHash": "sha256-Duw57KYyb+y7eIrqcabJfDLZnqrHh6vMtJaz/sKW8N4=",
+        "owner": "nanaism",
+        "repo": "yomiyasu",
+        "rev": "79d15a621751cb7ad3bea556832209e9112e575f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nanaism",
+        "repo": "yomiyasu",
         "type": "github"
       }
     }

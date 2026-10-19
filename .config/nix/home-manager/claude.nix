@@ -3,6 +3,7 @@
   pkgs,
   lib,
   claude-code-japanese-guard,
+  yomiyasu,
   nix-secrets,
   ...
 }:
@@ -135,6 +136,8 @@ in
       ".claude/rules".source =
         config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/claude/rules";
       # 応答が英語主体なら差し戻す Stop hook。/usr/bin/python3 は Xcode CLT のスタブなので nix の python3 で起動する
+      # 外部リポジトリのスキル。更新は nix flake update yomiyasu
+      ".claude/skills/yomiyasu".source = "${yomiyasu}/skills/yomiyasu";
       ".claude/hooks/japanese-guard".source = pkgs.writeShellScript "japanese-guard" ''
         exec ${lib.getExe pkgs.python3} ${claude-code-japanese-guard}/hooks/japanese-guard.py "$@"
       '';

@@ -22,6 +22,11 @@
       url = "github:minorun365/claude-code-japanese-guard";
       flake = false;
     };
+    # AI が書いた日本語を自然な日本語に推敲する Claude Code のスキル。flake ではないのでソースだけ取り込む
+    yomiyasu = {
+      url = "github:nanaism/yomiyasu";
+      flake = false;
+    };
     # 公開したくない設定 (sops で暗号化済み)。private リポジトリなので ssh で取得する
     nix-secrets = {
       url = "git+ssh://git@github.com/mozumasu/nix-secrets.git";
@@ -39,6 +44,7 @@
       ccsession,
       zeno,
       claude-code-japanese-guard,
+      yomiyasu,
       nix-secrets,
       ...
     }:
@@ -80,6 +86,7 @@
                   ccsession
                   zeno
                   claude-code-japanese-guard
+                  yomiyasu
                   nix-secrets
                   ;
               };
