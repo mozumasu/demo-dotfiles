@@ -232,6 +232,8 @@
     skanehira-ghost
     # dev サーバーに https://<name>.localhost の固定 URL を割り当てる (ghost と組み合わせる。rules/background-process.md)
     portless
+    # 依存ファイル (package.json, Cargo.toml 等) のバージョンが古いと診断を出す LSP
+    version-lsp
     # Docker
     lazydocker
     # Kubernetes
