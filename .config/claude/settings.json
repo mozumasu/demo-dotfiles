@@ -3,6 +3,11 @@
   "theme": "dark",
   "language": "ja",
   "outputStyle": "Concise",
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Slack__slack_send_message"
+    ]
+  },
   "env": {
     "CLAUDE_CODE_PLUGIN_DIRS": "~/dotfiles/.config/claude/plugins/slidev-preview"
   },
