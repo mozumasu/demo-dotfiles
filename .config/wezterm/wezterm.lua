@@ -31,5 +31,9 @@ require("tab").apply_to_config(config)
 require("workspace").apply_to_config(config)
 require("keybinds").apply_to_config(config)
 
+-- kamatte の着信で窓枠を点滅させ、Cmd+Shift+Enter で出られるようにする
+package.path = wezterm.home_dir .. "/.local/share/kamatte/wezterm/?.lua;" .. package.path
+require("kamatte").apply(config)
+
 -- 最後に、weztermに設定を戻す
 return config

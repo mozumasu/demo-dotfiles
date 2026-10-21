@@ -12,6 +12,11 @@
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     llm-agents.url = "github:numtide/llm-agents.nix";
     ccsession.url = "github:sorafujitani/ccsession";
+    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+    # riita から呼び出されるようにする。private リポジトリなので ssh で取得する
+    kamatte.url = "git+ssh://git@github.com/riita10069/kamatte";
+    kamatte.inputs.nixpkgs.follows = "nixpkgs";
     # zsh の abbrev / fzf 補完プラグイン。flake ではないのでソースだけ取り込む
     zeno = {
       url = "github:yuki-yano/zeno.zsh";
@@ -42,6 +47,8 @@
       treefmt-nix,
       llm-agents,
       ccsession,
+      sops-nix,
+      kamatte,
       zeno,
       claude-code-japanese-guard,
       yomiyasu,
@@ -91,6 +98,10 @@
                   ;
               };
               users."mozumasu" = import ./home-manager;
+              sharedModules = [
+                sops-nix.homeManagerModules.sops
+                kamatte.homeManagerModules.default
+              ];
             };
           }
           ./darwin/homebrew.nix
