@@ -14,6 +14,7 @@
     ./ghostty.nix
     ./git.nix
     ./granted.nix
+    ./kamatte.nix
   ];
   home.username = "mozumasu";
   home.homeDirectory = "/Users/mozumasu";
