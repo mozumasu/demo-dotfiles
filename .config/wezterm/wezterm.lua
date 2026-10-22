@@ -33,7 +33,12 @@ require("keybinds").apply_to_config(config)
 
 -- kamatte の着信で窓枠を点滅させ、Cmd+Shift+Enter で出られるようにする
 package.path = wezterm.home_dir .. "/.local/share/kamatte/wezterm/?.lua;" .. package.path
-require("kamatte").apply(config)
+local ok, kamatte = pcall(require, "kamatte")
+if ok then
+  kamatte.apply(config)
+else
+  wezterm.log_warn("kamatte の WezTerm 設定を読み込めませんでした。darwin-rebuild switch で反映してください: " .. tostring(kamatte))
+end
 
 -- 最後に、weztermに設定を戻す
 return config
