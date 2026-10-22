@@ -32,12 +32,21 @@ require("workspace").apply_to_config(config)
 require("keybinds").apply_to_config(config)
 
 -- kamatte の着信で窓枠を点滅させ、Cmd+Shift+Enter で出られるようにする
-package.path = wezterm.home_dir .. "/.local/share/kamatte/wezterm/?.lua;" .. package.path
-local ok, kamatte = pcall(require, "kamatte")
-if ok then
-  kamatte.apply(config)
+-- kamatte.lua が無い、読み込めない、適用に失敗したときも WezTerm 自体は起動させ、原因をログに出す
+local kamatte_dir = wezterm.home_dir .. "/.local/share/kamatte/wezterm"
+if #wezterm.glob(kamatte_dir .. "/kamatte.lua") == 0 then
+  wezterm.log_warn("kamatte: " .. kamatte_dir .. "/kamatte.lua がまだありません。nix-darwin の switch で kamatte を反映すると読み込まれます")
 else
-  wezterm.log_warn("kamatte の WezTerm 設定を読み込めませんでした。darwin-rebuild switch で反映してください: " .. tostring(kamatte))
+  package.path = kamatte_dir .. "/?.lua;" .. package.path
+  local loaded, kamatte = pcall(require, "kamatte")
+  if not loaded then
+    wezterm.log_error("kamatte: kamatte.lua の読み込みに失敗しました: " .. tostring(kamatte))
+  else
+    local applied, err = pcall(kamatte.apply, config)
+    if not applied then
+      wezterm.log_error("kamatte: WezTerm への設定の適用に失敗しました: " .. tostring(err))
+    end
+  end
 end
 
 -- 最後に、weztermに設定を戻す
