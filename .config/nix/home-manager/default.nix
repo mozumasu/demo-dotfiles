@@ -237,6 +237,8 @@
     version-lsp
     # Docker
     lazydocker
+    # Nulab Backlog の CLI (gh の Backlog 版)
+    bee
     # Kubernetes
     kubectl
     # switch コマンドで kubeconfig / context を選んで切り替える (シェルごとに別の KUBECONFIG を使う)
