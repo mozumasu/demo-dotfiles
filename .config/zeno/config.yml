@@ -18,6 +18,9 @@ snippets:
   - name: claude
     keyword: c
     snippet: claude
+  - name: claude personal
+    keyword: p
+    snippet: claude-p
   - name: claude continue
     keyword: cc
     snippet: claude --continue
