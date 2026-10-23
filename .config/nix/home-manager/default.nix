@@ -251,7 +251,16 @@
     # Nix (フォーマッタと LSP。CLI と Neovim で同じバイナリを使うため Mason ではなく nix で入れる)
     nixfmt
     nixd
-    llm-agents.claude-code
+    # llm-agents の wrapper が CLAUDE_CODE_CERT_STORE=system を既定にしたが、macOS の system ストアには
+    # ルート CA が入らず TLS 検証が失敗するので、同梱のルートも使う (https://github.com/numtide/llm-agents.nix/issues/11153)
+    (symlinkJoin {
+      name = "claude-code";
+      paths = [ llm-agents.claude-code ];
+      nativeBuildInputs = [ makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/claude --set-default CLAUDE_CODE_CERT_STORE bundled,system
+      '';
+    })
     llm-agents.codex
     llm-agents.pi
     nb
