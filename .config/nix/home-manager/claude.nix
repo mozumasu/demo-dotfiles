@@ -206,6 +206,9 @@ in
       # 外部リポジトリのスキル。更新は nix flake update yomiyasu
       ".claude/skills/yomiyasu".source = "${yomiyasu}/skills/yomiyasu";
       ".claude-personal/skills/yomiyasu".source = "${yomiyasu}/skills/yomiyasu";
+      # herdr のパッケージに同梱される公式スキル。herdr を上げれば一緒に更新される
+      ".claude/skills/herdr".source = "${pkgs.herdr}/share/skills/herdr/herdr";
+      ".claude-personal/skills/herdr".source = "${pkgs.herdr}/share/skills/herdr/herdr";
       ".claude/hooks/japanese-guard".source = pkgs.writeShellScript "japanese-guard" ''
         exec ${lib.getExe pkgs.python3} ${claude-code-japanese-guard}/hooks/japanese-guard.py "$@"
       '';
