@@ -1,6 +1,8 @@
 alias ll='ls -l'
 # 個人アカウントの Claude Code。認証・履歴・settings.json は ~/.claude-personal に分け、dotfiles のルールとスキルだけ共有する (claude.nix)
 alias claude-p='CLAUDE_CONFIG_DIR=$HOME/.claude-personal claude'
+# ccsession も CLAUDE_CONFIG_DIR を見るので、claude-p のセッションを一覧・再開できる
+alias ccsession-p='CLAUDE_CONFIG_DIR=$HOME/.claude-personal ccsession'
 
 # 再ログイン後も古い SSH_AUTH_SOCK を引き継ぐことがあるので、ログイン時に張り直す固定パスを使う (home-manager の ssh-agent-socket-link)
 # ssh でログインしたときは転送されてきた agent を使いたいので上書きしない
