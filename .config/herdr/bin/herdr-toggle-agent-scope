@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# サイドバーのエージェント一覧を「今のワークスペースだけ」と「すべて」で切り替える。
+# ソケット API の agent.view.set / agent.view.clear を使う。
+# 今の状態は API から取れないので、状態ファイルで覚えておく。
+# 引数に current / all を渡すとその状態にする。
+set -euo pipefail
+
+SOCKET=${HERDR_SOCKET_PATH:-$HOME/.config/herdr/herdr.sock}
+STATE_FILE=${XDG_STATE_HOME:-$HOME/.local/state}/herdr/agent-scope
+SOURCE=dotfiles-agent-scope
+
+notify() {
+  herdr notification show "$1" --sound none >/dev/null 2>&1 || true
+}
+
+request() {
+  printf '%s\n' "$1" | nc -U -w 2 "$SOCKET"
+}
+
+current=$(cat "$STATE_FILE" 2>/dev/null || echo all)
+target=${1:-$([ "$current" = current ] && echo all || echo current)}
+
+case "$target" in
+  current)
+    request '{"id":"1","method":"agent.view.set","params":{"source":"'"$SOURCE"'","label":"current workspace","filter":{"op":"eq","field":"workspace_id","value":{"context":"current_workspace_id"}}}}' >/dev/null
+    notify "Agents: current workspace"
+    ;;
+  all)
+    request '{"id":"1","method":"agent.view.clear","params":{"source":"'"$SOURCE"'"}}' >/dev/null
+    notify "Agents: all workspaces"
+    ;;
+  *)
+    echo "usage: $(basename "$0") [current|all]" >&2
+    exit 1
+    ;;
+esac
+
+mkdir -p "$(dirname "$STATE_FILE")"
+echo "$target" >"$STATE_FILE"

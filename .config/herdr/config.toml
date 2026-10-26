@@ -91,6 +91,12 @@ key = "prefix+y"
 type = "shell"
 command = "$HOME/dotfiles/.config/herdr/bin/herdr-copy-last-output"
 
+# Toggle the sidebar agent list between the current workspace and all workspaces
+[[keys.command]]
+key = "prefix+a"
+type = "shell"
+command = "$HOME/dotfiles/.config/herdr/bin/herdr-toggle-agent-scope"
+
 [[keys.command]]
 key = "prefix+shift+l"
 type = "pane"
