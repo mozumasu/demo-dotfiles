@@ -1,0 +1,34 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "ghost",
+  "title": "Ghost",
+  "description": "ghost で動かしているタスクのログを見たり、止めたり、再実行したりする",
+  "icon": "extension-icon.png",
+  "author": "mozumasu",
+  "license": "MIT",
+  "categories": [
+    "Developer Tools"
+  ],
+  "commands": [
+    {
+      "name": "index",
+      "title": "Ghost Tasks",
+      "description": "ghost のタスクを一覧し、ログ表示、停止、再実行をする",
+      "mode": "view"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "2.7.3",
+    "@raycast/utils": "2.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.17",
+    "@types/react": "19.0.10",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "typecheck": "tsc --noEmit"
+  }
+}
