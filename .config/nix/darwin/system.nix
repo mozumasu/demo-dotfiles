@@ -90,6 +90,8 @@
       DSDontWriteNetworkStores = true;
       DSDontWriteUSBStores = true;
     };
+    # Homerow の起動中だけ ABC に切り替える (macSKK 経由だとラベルのキー入力が Homerow に届かず、アプリに入ってしまう)
+    CustomUserPreferences."com.superultra.Homerow"."auto-switch-input-source-id" = "com.apple.keylayout.ABC";
     # スクリーンショットの保存先 (ファイル保存を選んだとき用。フォルダがないとデスクトップに保存される)
     screencapture.location = "~/Pictures/Screenshots";
     screencapture.type = "png";
