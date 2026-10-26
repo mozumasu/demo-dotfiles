@@ -80,6 +80,7 @@
                 portless = final.callPackage ./packages/portless.nix { };
                 version-lsp = final.callPackage ./packages/version-lsp.nix { };
                 bee = final.callPackage ./packages/bee { };
+                mdecho = final.callPackage ./packages/mdecho { };
               })
             ];
           }

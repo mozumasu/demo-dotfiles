@@ -239,6 +239,8 @@
     lazydocker
     # Nulab Backlog の CLI (gh の Backlog 版)
     bee
+    # AI が生成した Markdown をブラウザで表示し、箇所を指定して返信できるようにする
+    mdecho
     # Kubernetes
     kubectl
     # switch コマンドで kubeconfig / context を選んで切り替える (シェルごとに別の KUBECONFIG を使う)
