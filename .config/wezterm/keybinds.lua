@@ -18,10 +18,10 @@ local herdr_keys = {
 	-- Ctrl+Tab / Ctrl+Shift+Tab: next_tab / previous_tab
 	csi_u("Tab", "CTRL", 9, 5),
 	csi_u("Tab", "CTRL|SHIFT", 9, 6),
-	-- Cmd+Ctrl+p / Cmd+Ctrl+n: previous_agent / next_agent
-	-- (Karabiner で Cmd+↑ / Cmd+↓ に変換されて届くので、矢印キーの修飾付き形式で送る)
-	{ key = "UpArrow", mods = "CMD", action = act.SendString("\x1b[1;9A") },
-	{ key = "DownArrow", mods = "CMD", action = act.SendString("\x1b[1;9B") },
+	-- Alt+Ctrl+p / Alt+Ctrl+n: previous_agent / next_agent
+	-- (Karabiner で Alt+↑ / Alt+↓ に変換されて届くので、矢印キーの修飾付き形式で送る)
+	{ key = "UpArrow", mods = "ALT", action = act.SendString("\x1b[1;3A") },
+	{ key = "DownArrow", mods = "ALT", action = act.SendString("\x1b[1;3B") },
 	-- Shift+Backspace: focus_pane_left
 	csi_u("Backspace", "SHIFT", 127, 2),
 }
@@ -84,8 +84,8 @@ M.keys = {
 	{ key = "R", mods = "CTRL", action = act.ReloadConfiguration },
 	{ key = "r", mods = "SUPER", action = act.ReloadConfiguration },
 
-	-- コマンドパレット
-	{ key = "P", mods = "CTRL", action = act.ActivateCommandPalette },
+	-- コマンドパレット (Ctrl+Shift+p は Karabiner で Shift+↑ に変わって届かないので Cmd+Shift+p にする)
+	{ key = "p", mods = "SUPER|SHIFT", action = act.ActivateCommandPalette },
 	-- 文字選択パレット
 	{
 		key = "U",
@@ -196,5 +196,21 @@ function M.apply_to_config(config)
 	end
 	config.key_tables = M.key_tables
 end
+
+-- コマンドパレット (Cmd+Shift+p) から herdr の config.toml を読み直せるようにする
+-- GUI から起動した WezTerm の PATH には nix のパスがないので、ログインシェル経由で実行する
+wezterm.on("augment-command-palette", function()
+	return {
+		{
+			brief = "herdr: reload config",
+			icon = "md_reload",
+			action = wezterm.action_callback(function(window)
+				local ok, stdout, stderr = wezterm.run_child_process({ "zsh", "-lc", "herdr server reload-config" })
+				local message = ok and "config.toml を読み直しました" or (stderr ~= "" and stderr or stdout)
+				window:toast_notification("herdr", message, nil, 3000)
+			end),
+		},
+	}
+end)
 
 return M
