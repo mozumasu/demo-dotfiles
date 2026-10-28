@@ -40,6 +40,7 @@
     # Mac App Store 限定のアプリ。mas で入れるので App Store にサインインしておく必要がある
     masApps = {
       "Endel" = 1346247457;
+      "Kindle" = 302584613;
     };
   };
 }
