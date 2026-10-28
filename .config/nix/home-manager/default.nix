@@ -219,6 +219,7 @@
     # バージョン管理
     git
     gh
+    glab
     ghq
     lazygit
     # .gitignore のテンプレート (zsh の gi 関数で使う)
