@@ -44,8 +44,8 @@ open_worktree = ""    # optional, unset by default
 remove_worktree = ""  # optional, unset by default; opens confirmation
 
 # agent
-previous_agent = "cmd+up"         # Karabiner で Cmd+Ctrl+p → Cmd+↑
-next_agent = "cmd+down"           # Karabiner で Cmd+Ctrl+n → Cmd+↓
+previous_agent = "alt+up"         # Karabiner で Alt+Ctrl+p → Alt+↑
+next_agent = "alt+down"           # Karabiner で Alt+Ctrl+n → Alt+↓
 focus_agent = ""        # optional indexed binding, e.g. "prefix+alt+1..9"
 
 remote_image_paste = "ctrl+v" # only active in herdr --remote; empty disables raw-key image paste
