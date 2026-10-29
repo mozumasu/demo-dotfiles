@@ -254,6 +254,8 @@
     # Nix (フォーマッタと LSP。CLI と Neovim で同じバイナリを使うため Mason ではなく nix で入れる)
     nixfmt
     nixd
+    # Terraform の LSP (Mason ではなく nix で入れる)
+    terraform-ls
     # llm-agents の wrapper が CLAUDE_CODE_CERT_STORE=system を既定にしたが、macOS の system ストアには
     # ルート CA が入らず TLS 検証が失敗するので、同梱のルートも使う (https://github.com/numtide/llm-agents.nix/issues/11153)
     (symlinkJoin {
