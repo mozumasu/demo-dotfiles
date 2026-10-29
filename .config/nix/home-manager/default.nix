@@ -72,6 +72,49 @@
       RunAtLoad = true;
     };
   };
+  # vpn-i (L2TP) をつないだら AWS VPN を切る。同時につなぐと経路や DNS を取り合うため
+  # AWS VPN はすべての通信を流す設定なので、つないだまま vpn-i に接続すると vpn-i のサーバーへの経路も AWS VPN の中にできる。
+  # そのため AWS VPN を切ると vpn-i も切れる。AWS VPN の経路が消えるのを待ってから vpn-i をつなぎ直す
+  # VPN をつなぐと DNS の設定が書き換わるので、resolv.conf の変更をきっかけに動かす (常駐しない)
+  # AWS VPN Client は画面のボタンを押すにはアクセシビリティの許可が要るため、アプリを終了して切る
+  launchd.agents.vpn-i-exclusive = {
+    enable = true;
+    config = {
+      ProgramArguments = [
+        "${pkgs.writeShellScript "vpn-i-exclusive" ''
+          service="vpn-i"
+          aws_vpn_up() { /usr/sbin/netstat -rn -f inet | /usr/bin/grep -qE '^0/1 .*utun'; }
+
+          [ "$(/usr/sbin/scutil --nc status "$service" | /usr/bin/head -1)" = Connected ] || exit 0
+          aws_vpn_up || exit 0
+
+          echo "$(date '+%F %T') $service に接続したので AWS VPN を切ります"
+          /usr/bin/pkill -x "AWS VPN Client"
+          # 切れるまで 3〜6 秒ほどかかり、10 秒では足りないことがあったので 30 秒まで待つ
+          for _ in $(seq 150); do
+            aws_vpn_up || break
+            sleep 0.2
+          done
+          if aws_vpn_up; then
+            echo "$(date '+%F %T') AWS VPN を切れませんでした"
+            exit 1
+          fi
+
+          echo "$(date '+%F %T') $service をつなぎ直します"
+          /usr/sbin/scutil --nc stop "$service"
+          for _ in $(seq 50); do
+            [ "$(/usr/sbin/scutil --nc status "$service" | /usr/bin/head -1)" = Disconnected ] && break
+            sleep 0.2
+          done
+          # scutil --nc start だと L2TP の共有シークレットをキーチェーンから読めず、「見つからない」と出て失敗する
+          /usr/sbin/networksetup -connectpppoeservice "$service"
+        ''}"
+      ];
+      WatchPaths = [ "/var/run/resolv.conf" ];
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/vpn-i-exclusive.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/vpn-i-exclusive.log";
+    };
+  };
   xdg.configFile."nvim".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/nvim";
   xdg.configFile."karabiner".source =
