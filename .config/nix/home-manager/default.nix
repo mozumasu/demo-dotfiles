@@ -72,6 +72,29 @@
       RunAtLoad = true;
     };
   };
+  # Wi-Fi につながらなくなる不具合の調査用。つながらない間は調べられないので、1 分ごとに状態をログに残す
+  # 1 行の項目: IP、デフォルトゲートウェイ、DHCP の失敗状態、ゲートウェイと 1.1.1.1 への ping、名前解決、AWS VPN と vpn-i の状態
+  launchd.agents.wifi-health-log = {
+    enable = true;
+    config = {
+      ProgramArguments = [
+        "${pkgs.writeShellScript "wifi-health-log" ''
+          ip=$(/usr/sbin/ipconfig getifaddr en0 || echo none)
+          gw=$(/sbin/route -n get default 2>/dev/null | /usr/bin/awk '/gateway/ {print $2}')
+          dhcp=$(/usr/sbin/ipconfig getsummary en0 | /usr/bin/awk -F' : ' '/LastFailureStatus/ {print $2; exit}')
+          ping_ok() { /sbin/ping -c 1 -t 2 "$1" >/dev/null 2>&1 && echo ok || echo ng; }
+          dns=$(/usr/bin/dscacheutil -q host -a name anthropic.com 2>/dev/null | /usr/bin/grep -q ip_address && echo ok || echo ng)
+          aws=$(/usr/sbin/netstat -rn -f inet | /usr/bin/grep -qE '^0/1 .*utun' && echo up || echo down)
+          vpni=$(/usr/sbin/scutil --nc status vpn-i | /usr/bin/head -1)
+          echo "$(date '+%F %T') ip=$ip gw=''${gw:-none} dhcp=''${dhcp:-ok} ping_gw=$(ping_ok "''${gw:-0.0.0.0}") ping_1111=$(ping_ok 1.1.1.1) dns=$dns aws_vpn=$aws vpn-i=$vpni"
+        ''}"
+      ];
+      StartInterval = 60;
+      RunAtLoad = true;
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/wifi-health.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/wifi-health.log";
+    };
+  };
   # vpn-i (L2TP) をつないだら AWS VPN を切る。同時につなぐと経路や DNS を取り合うため
   # AWS VPN はすべての通信を流す設定なので、つないだまま vpn-i に接続すると vpn-i のサーバーへの経路も AWS VPN の中にできる。
   # そのため AWS VPN を切ると vpn-i も切れる。AWS VPN の経路が消えるのを待ってから vpn-i をつなぎ直す
