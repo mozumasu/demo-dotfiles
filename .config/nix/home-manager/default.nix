@@ -73,7 +73,8 @@
     };
   };
   # Wi-Fi につながらなくなる不具合の調査用。つながらない間は調べられないので、1 分ごとに状態をログに残す
-  # 1 行の項目: IP、デフォルトゲートウェイ、DHCP の失敗状態、ゲートウェイと 1.1.1.1 への ping、名前解決、AWS VPN と vpn-i の状態
+  # 1 行の項目: IP、デフォルトゲートウェイ、DHCP の失敗状態、ゲートウェイと 1.1.1.1 への ping、名前解決、HTTPS で取得できたか、AWS VPN と vpn-i の状態
+  # ping と名前解決は通るのに Web が使えないことがあったので、HTTPS の応答コードとかかった秒数も残す
   launchd.agents.wifi-health-log = {
     enable = true;
     config = {
@@ -84,9 +85,11 @@
           dhcp=$(/usr/sbin/ipconfig getsummary en0 | /usr/bin/awk -F' : ' '/LastFailureStatus/ {print $2; exit}')
           ping_ok() { /sbin/ping -c 1 -t 2 "$1" >/dev/null 2>&1 && echo ok || echo ng; }
           dns=$(/usr/bin/dscacheutil -q host -a name anthropic.com 2>/dev/null | /usr/bin/grep -q ip_address && echo ok || echo ng)
+          # 000 は 5 秒以内に応答がなかったことを表す
+          https=$(/usr/bin/curl -s -o /dev/null -m 5 -w '%{http_code}/%{time_total}s' https://www.apple.com/library/test/success.html)
           aws=$(/usr/sbin/netstat -rn -f inet | /usr/bin/grep -qE '^0/1 .*utun' && echo up || echo down)
           vpni=$(/usr/sbin/scutil --nc status vpn-i | /usr/bin/head -1)
-          echo "$(date '+%F %T') ip=$ip gw=''${gw:-none} dhcp=''${dhcp:-ok} ping_gw=$(ping_ok "''${gw:-0.0.0.0}") ping_1111=$(ping_ok 1.1.1.1) dns=$dns aws_vpn=$aws vpn-i=$vpni"
+          echo "$(date '+%F %T') ip=$ip gw=''${gw:-none} dhcp=''${dhcp:-ok} ping_gw=$(ping_ok "''${gw:-0.0.0.0}") ping_1111=$(ping_ok 1.1.1.1) dns=$dns https=$https aws_vpn=$aws vpn-i=$vpni"
         ''}"
       ];
       StartInterval = 60;
