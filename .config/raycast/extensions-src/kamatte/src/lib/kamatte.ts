@@ -49,7 +49,7 @@ function kamatteBin(): string {
     }
   });
   if (!bin)
-    throw new Error("kamatte が見つかりません。home-manager の switch か kamatte の mac/install.sh で入れてください");
+    throw new Error("kamatte が見つかりません。nix-darwin の switch か kamatte の mac/install.sh で入れてください");
   return bin;
 }
 
@@ -103,7 +103,7 @@ export async function restartDaemon(): Promise<void> {
     // 113 はサービスが launchd に登録されていないとき
     if ((e as { code?: number }).code === 113) {
       throw new Error(
-        `launchd に ${DAEMON_LABEL} が登録されていません。home-manager の switch か kamatte の mac/install.sh で登録してください`,
+        `launchd に ${DAEMON_LABEL} が登録されていません。nix-darwin の switch か kamatte の mac/install.sh で登録してください`,
       );
     }
     throw toError(e, "launchctl kickstart が終わりませんでした");
