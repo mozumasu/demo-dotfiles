@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   canRestart,
   elapsed,
+  isActive,
   LOG_PATH,
   loadSnapshot,
   operationsFor,
@@ -63,7 +64,6 @@ export default function Command() {
   }
 
   const phase = phaseOf(data);
-  const active = phase === "ringing" || phase === "outgoing" || phase === "incall";
   const recent = recentMessage(data);
 
   return (
@@ -77,7 +77,7 @@ export default function Command() {
         <MenuBarExtra.Item
           icon={PHASE_ICON[phase]}
           title={PHASE_LABEL[phase]}
-          subtitle={active ? [route(data), elapsed(data)].filter(Boolean).join("  ") : data.me}
+          subtitle={isActive(phase) ? [route(data), elapsed(data)].filter(Boolean).join("  ") : data.me}
         />
         {phase === "unauthorized" && <MenuBarExtra.Item title={data.authError ?? ""} />}
         {error && <MenuBarExtra.Item title="最新の状態を読めませんでした" subtitle={error.message} />}

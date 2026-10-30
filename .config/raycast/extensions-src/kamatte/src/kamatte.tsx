@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   canRestart,
   elapsed,
+  isActive,
   LOG_PATH,
   loadSnapshot,
   Operation,
@@ -82,27 +83,37 @@ export default function Command() {
     />
   );
 
-  const common = (phase?: Phase) => (
-    <ActionPanel.Section>
-      <Action
-        title="状態を読み直す"
-        icon={Icon.ArrowClockwise}
-        shortcut={{ modifiers: ["cmd"], key: "r" }}
-        onAction={refresh}
-      />
-      {phase && canRestart(phase) && (
-        <Action
-          title="デーモンを起動し直す"
-          icon={Icon.Power}
-          shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
-          onAction={act(() => restart({ inWindow: true, onDone: afterAction }))}
-        />
-      )}
-      {existsSync(LOG_PATH) && (
-        <Action.Open title="デーモンのログを開く" target={LOG_PATH} shortcut={{ modifiers: ["cmd"], key: "o" }} />
-      )}
-    </ActionPanel.Section>
+  const refreshAction = (
+    <Action
+      title="状態を読み直す"
+      icon={Icon.ArrowClockwise}
+      shortcut={{ modifiers: ["cmd"], key: "r" }}
+      onAction={refresh}
+    />
   );
+  const restartAction = (
+    <Action
+      title="デーモンを起動し直す"
+      icon={Icon.Power}
+      shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
+      onAction={act(() => restart({ inWindow: true, onDone: afterAction }))}
+    />
+  );
+  // デーモンが止まっているときと API キーが通らないときは、Enter で起動し直す。つながり直している途中は待てば戻るので、読み直しを先にする
+  const common = (phase?: Phase) => {
+    const restartable = phase !== undefined && canRestart(phase);
+    const restartFirst = restartable && phase !== "reconnecting";
+    return (
+      <ActionPanel.Section>
+        {restartFirst && restartAction}
+        {refreshAction}
+        {restartable && !restartFirst && restartAction}
+        {existsSync(LOG_PATH) && (
+          <Action.Open title="デーモンのログを開く" target={LOG_PATH} shortcut={{ modifiers: ["cmd"], key: "o" }} />
+        )}
+      </ActionPanel.Section>
+    );
+  };
 
   if (error) {
     return (
@@ -122,9 +133,8 @@ export default function Command() {
   const phase = phaseOf(snapshot);
   const ops = operationsFor(phase);
   const recent = recentMessage(snapshot);
-  const active = phase === "ringing" || phase === "outgoing" || phase === "incall";
   // 操作がないときは下の行に状態を出すので、見出しには自分の名前だけを出す
-  const heading = active
+  const heading = isActive(phase)
     ? `${PHASE_LABEL[phase]}  ${route(snapshot)}`
     : ops.length > 0
       ? `${PHASE_LABEL[phase]}  ${snapshot.me}`
@@ -132,7 +142,7 @@ export default function Command() {
 
   return (
     <List isLoading={isLoading || acting} searchBarPlaceholder="操作で絞り込む">
-      <List.Section title={heading} subtitle={active ? elapsed(snapshot) : undefined}>
+      <List.Section title={heading} subtitle={isActive(phase) ? elapsed(snapshot) : undefined}>
         {ops.map((op) => (
           <List.Item
             key={op}

@@ -142,7 +142,13 @@ export function operationsFor(phase: Phase): Operation[] {
   }
 }
 
-// launchd から起動し直せば戻る状態か。通話や呼び出しの途中で起動し直すと切れてしまうので、待ち受け以外では出さない
+// 着信、呼び出し、通話のどれかの途中か
+export function isActive(phase: Phase): phase is "ringing" | "outgoing" | "incall" {
+  return phase === "ringing" || phase === "outgoing" || phase === "incall";
+}
+
+// デーモンを起動し直す操作を出すか。止まっている、API キーが通らない、つながらないときだけ出す。
+// 着信や通話の途中で起動し直すと切れてしまい、待ち受け中は起動し直す理由がない
 export function canRestart(phase: Phase): boolean {
   return phase === "stopped" || phase === "unauthorized" || phase === "reconnecting";
 }
@@ -170,10 +176,7 @@ const PHASE_MARK: Record<Phase, string> = {
 // Script Commands の kamatte status が出していた kamatte status --short の一行目に合わせる
 export function summary(s: Snapshot): string {
   const phase = phaseOf(s);
-  const rest =
-    phase === "ringing" || phase === "outgoing" || phase === "incall"
-      ? [route(s), elapsed(s)].filter(Boolean).join("  ")
-      : s.me;
+  const rest = isActive(phase) ? [route(s), elapsed(s)].filter(Boolean).join("  ") : s.me;
   return `${PHASE_MARK[phase]} ${PHASE_LABEL[phase]}  ${rest}`;
 }
 
