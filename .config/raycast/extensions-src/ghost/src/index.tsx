@@ -2,6 +2,7 @@ import { Action, ActionPanel, Color, Detail, Icon, List, showToast, Toast } from
 import { usePromise } from "@raycast/utils";
 import { execFile } from "node:child_process";
 import { open } from "node:fs/promises";
+import { connect } from "node:net";
 import { homedir, userInfo } from "node:os";
 import { basename, join } from "node:path";
 import { promisify } from "node:util";
@@ -120,6 +121,40 @@ async function stopTask(task: Task, force: boolean) {
   await execFileAsync(GHOST, ["stop", ...(force ? ["--force"] : []), task.id]);
 }
 
+function isListening(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = connect({ host: "127.0.0.1", port });
+    const done = (ok: boolean) => {
+      socket.destroy();
+      resolve(ok);
+    };
+    socket.setTimeout(500, () => done(false));
+    socket.once("connect", () => done(true));
+    socket.once("error", () => done(false));
+  });
+}
+
+// sudo なしで立てる portless のプロキシのポート。sudo で立てた場合は 443 で待ち受ける
+const PORTLESS_PROXY_PORT = 1355;
+
+// portless 経由のアプリは、プロキシが落ちていると TTY のない Raycast からは起動できない。
+// 再実行の前にプロキシが待ち受けているか確かめ、無ければ sudo 不要のポートで立てる
+async function ensurePortlessProxy(task: Task) {
+  if (basename(task.command[0] ?? "") !== "portless" || task.command[1] === "proxy") return;
+  if ((await isListening(PORTLESS_PROXY_PORT)) || (await isListening(443))) return;
+  await execFileAsync(
+    GHOST,
+    ["run", "--cwd", task.cwd, "--", "portless", "proxy", "start", "--port", String(PORTLESS_PROXY_PORT), "--https"],
+    { cwd: task.cwd, env: Object.fromEntries(task.env) },
+  );
+  const deadline = Date.now() + 15_000;
+  while (Date.now() < deadline) {
+    if (await isListening(PORTLESS_PROXY_PORT)) return;
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  throw new Error(`portless のプロキシが ${PORTLESS_PROXY_PORT} 番で起動しませんでした`);
+}
+
 // 起動したときの環境変数で同じディレクトリから起動し直す。Raycast の環境で動かすと PATH などが足りない
 async function rerunTask(task: Task) {
   if (task.status === "running" && isAlive(task.pid)) {
@@ -129,6 +164,7 @@ async function rerunTask(task: Task) {
       await waitForExit(task.pid, 3_000);
     }
   }
+  await ensurePortlessProxy(task);
   await execFileAsync(GHOST, ["run", "--cwd", task.cwd, "--", ...task.command], {
     cwd: task.cwd,
     env: Object.fromEntries(task.env),
