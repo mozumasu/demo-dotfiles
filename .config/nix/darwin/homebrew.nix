@@ -26,6 +26,7 @@
       "raycast"
       "slack"
       "discord"
+      "spotify"
       "shottr"
       "keycastr"
       "macskk"
