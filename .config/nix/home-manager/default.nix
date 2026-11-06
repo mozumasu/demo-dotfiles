@@ -311,6 +311,8 @@
     bee
     # AI が生成した Markdown をブラウザで表示し、箇所を指定して返信できるようにする
     mdecho
+    # New Relic の CLI
+    newrelic-cli
     # Kubernetes
     kubectl
     # switch コマンドで kubeconfig / context を選んで切り替える (シェルごとに別の KUBECONFIG を使う)
