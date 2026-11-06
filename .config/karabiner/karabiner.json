@@ -4,13 +4,13 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "ブラウザでは macSKK 使用中の Control+J を F19 に置き換える (Web アプリのショートカットに吸われるため。macSKK 側で F19 をひらがな/確定に割り当てている)",
+                        "description": "ブラウザと WezTerm では macSKK 使用中の Control+J を F19 に置き換える (Web アプリのショートカットに吸われたり、WezTerm が改行として送ったりするため。macSKK 側で F19 をひらがな/確定に割り当てている)",
                         "manipulators": [
                             {
                                 "conditions": [
                                     {
                                         "type": "frontmost_application_if",
-                                        "bundle_identifiers": ["^company\\.thebrowser\\.Browser$", "^com\\.apple\\.Safari$"]
+                                        "bundle_identifiers": ["^company\\.thebrowser\\.Browser$", "^com\\.apple\\.Safari$", "^com\\.github\\.wez\\.wezterm$"]
                                     },
                                     {
                                         "type": "input_source_if",

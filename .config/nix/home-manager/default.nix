@@ -228,7 +228,7 @@
     '';
 
   # macSKK のキー設定も .config/macskk/key-binding-set.json で管理する。設定画面で変えても次に変わったときに戻る
-  # ひらがな (確定) に C-j に加えて F19 を割り当てている。ブラウザでは Karabiner が C-j を F19 に置き換え、Web アプリのショートカットに C-j を渡さない
+  # ひらがな (確定) に C-j に加えて F19 を割り当てている。ブラウザと WezTerm では Karabiner が C-j を F19 に置き換え、Web アプリのショートカットや WezTerm の改行に C-j を渡さない
   # 辞書と同じく、変わったときだけ Container に書く
   home.activation.macSKKKeyBindings =
     let
