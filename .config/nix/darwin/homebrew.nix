@@ -1,4 +1,4 @@
-{ ... }:
+{ browser, ... }:
 {
   homebrew = {
     enable = true;
@@ -21,7 +21,7 @@
     casks = [
       "homerow"
       "aerospace" # タイル型ウィンドウマネージャ。設定は ~/.config/aerospace/aerospace.toml (Neovim と同じく mkOutOfStoreSymlink でリンク)
-      "arc"
+      browser.cask
       "wezterm"
       "raycast"
       "slack"

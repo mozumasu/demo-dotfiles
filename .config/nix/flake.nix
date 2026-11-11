@@ -58,65 +58,90 @@
     let
       pkgs = nixpkgs.legacyPackages.aarch64-darwin;
       treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
+      # Mac ごとの違いは引数で渡す。browser は Homebrew の cask 名と AeroSpace で使う app-id
+      # ホスト名を設定名とそろえておくと、darwin-rebuild switch --flake で #<設定名> を省ける
+      mkDarwin =
+        { hostName, browser }:
+        darwin.lib.darwinSystem {
+          system = "aarch64-darwin";
+          specialArgs = { inherit browser; };
+          modules = [
+            ./darwin/system.nix
+            {
+              networking.hostName = hostName;
+              networking.computerName = hostName;
+              networking.localHostName = hostName;
+            }
+            {
+              nix.settings.experimental-features = "nix-command flakes";
+              system.primaryUser = "mozumasu";
+              users.users."mozumasu".home = "/Users/mozumasu";
+
+              nixpkgs.overlays = [
+                llm-agents.overlays.shared-nixpkgs
+                # nixpkgs にないパッケージ
+                (final: prev: {
+                  skanehira-ghost = final.callPackage ./packages/ghost.nix { };
+                  portless = final.callPackage ./packages/portless.nix { };
+                  version-lsp = final.callPackage ./packages/version-lsp.nix { };
+                  bee = final.callPackage ./packages/bee { };
+                  mdecho = final.callPackage ./packages/mdecho { };
+                  newrelic-cli = final.callPackage ./packages/newrelic-cli.nix { };
+                })
+              ];
+            }
+            home-manager.darwinModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                backupFileExtension = "backup";
+                extraSpecialArgs = {
+                  inherit
+                    ccsession
+                    zeno
+                    claude-code-japanese-guard
+                    yomiyasu
+                    nix-secrets
+                    browser
+                    ;
+                };
+                users."mozumasu" = import ./home-manager;
+                sharedModules = [
+                  sops-nix.homeManagerModules.sops
+                  kamatte.homeManagerModules.default
+                ];
+              };
+            }
+            ./darwin/homebrew.nix
+            nix-homebrew.darwinModules.nix-homebrew
+            {
+              nix-homebrew = {
+                enable = true;
+                user = "mozumasu";
+                autoMigrate = true;
+              };
+            }
+          ];
+        };
     in
     {
       # nix fmt / nix run .#formatterの実体
       formatter.aarch64-darwin = treefmtEval.config.build.wrapper;
       checks.aarch64-darwin.formatting = treefmtEval.config.build.check ./.;
-      darwinConfigurations.arabica = darwin.lib.darwinSystem {
-        system = "aarch64-darwin";
-        modules = [
-          ./darwin/system.nix
-          {
-            nix.settings.experimental-features = "nix-command flakes";
-            system.primaryUser = "mozumasu";
-            users.users."mozumasu".home = "/Users/mozumasu";
-
-            nixpkgs.overlays = [
-              llm-agents.overlays.shared-nixpkgs
-              # nixpkgs にないパッケージ
-              (final: prev: {
-                skanehira-ghost = final.callPackage ./packages/ghost.nix { };
-                portless = final.callPackage ./packages/portless.nix { };
-                version-lsp = final.callPackage ./packages/version-lsp.nix { };
-                bee = final.callPackage ./packages/bee { };
-                mdecho = final.callPackage ./packages/mdecho { };
-                newrelic-cli = final.callPackage ./packages/newrelic-cli.nix { };
-              })
-            ];
-          }
-          home-manager.darwinModules.home-manager
-          {
-            home-manager = {
-              useGlobalPkgs = true;
-              useUserPackages = true;
-              backupFileExtension = "backup";
-              extraSpecialArgs = {
-                inherit
-                  ccsession
-                  zeno
-                  claude-code-japanese-guard
-                  yomiyasu
-                  nix-secrets
-                  ;
-              };
-              users."mozumasu" = import ./home-manager;
-              sharedModules = [
-                sops-nix.homeManagerModules.sops
-                kamatte.homeManagerModules.default
-              ];
-            };
-          }
-          ./darwin/homebrew.nix
-          nix-homebrew.darwinModules.nix-homebrew
-          {
-            nix-homebrew = {
-              enable = true;
-              user = "mozumasu";
-              autoMigrate = true;
-            };
-          }
-        ];
+      darwinConfigurations.arabica = mkDarwin {
+        hostName = "arabica";
+        browser = {
+          cask = "arc";
+          appId = "company.thebrowser.Browser";
+        };
+      };
+      darwinConfigurations.robusta = mkDarwin {
+        hostName = "robusta";
+        browser = {
+          cask = "vivaldi";
+          appId = "com.vivaldi.Vivaldi";
+        };
       };
     };
 }

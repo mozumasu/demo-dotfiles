@@ -1,4 +1,4 @@
-{ ... }:
+{ browser, ... }:
 {
   programs.aerospace = {
     enable = true;
@@ -170,9 +170,9 @@
       # アプリごとの初期配置 (app-id は `aerospace list-apps` で調べる)。if は Nix の予約語なので引用符で囲む
       on-window-detected = [
         {
-          "if".app-id = "company.thebrowser.Browser";
+          "if".app-id = browser.appId;
           run = "move-node-to-workspace 1";
-        } # Arc
+        }
         {
           "if".app-id = "com.github.wez.wezterm";
           run = "move-node-to-workspace 2";

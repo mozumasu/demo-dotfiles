@@ -38,7 +38,7 @@ snippets:
   # nix-darwin / home-manager の設定を反映する
   - name: darwin-rebuild switch
     keyword: drs
-    snippet: sudo darwin-rebuild switch --flake ~/dotfiles/.config/nix#arabica
+    snippet: sudo darwin-rebuild switch --flake ~/dotfiles/.config/nix
   # flake.lock の入力を更新する (反映は drs)
   - name: nix flake update
     keyword: nfu
