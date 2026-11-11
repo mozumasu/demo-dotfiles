@@ -1,0 +1,104 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "kamatte",
+  "title": "Kamatte",
+  "description": "kamatte で相手を呼び出したり、着信に出たり、通話を切ったりする",
+  "icon": "extension-icon.png",
+  "author": "mozumasu",
+  "license": "MIT",
+  "categories": [
+    "Communication"
+  ],
+  "commands": [
+    {
+      "name": "kamatte",
+      "title": "Kamatte",
+      "description": "誰から誰への着信か、呼び出し中か、通話中かを見て、そのときできる操作をする",
+      "mode": "view",
+      "keywords": [
+        "status",
+        "電話"
+      ]
+    },
+    {
+      "name": "menu-bar",
+      "title": "Kamatte Menu Bar",
+      "description": "メニューバーに今の状態を出し、そこから出たり切ったりする",
+      "mode": "menu-bar",
+      "interval": "10s",
+      "keywords": [
+        "status"
+      ]
+    },
+    {
+      "name": "toggle",
+      "title": "Toggle Call",
+      "description": "着信中なら出る、呼び出し中なら取り消す、通話中なら切る",
+      "mode": "no-view",
+      "keywords": [
+        "kamatte"
+      ]
+    },
+    {
+      "name": "call",
+      "title": "Call",
+      "description": "相手を呼び出す",
+      "mode": "no-view",
+      "keywords": [
+        "kamatte",
+        "電話"
+      ]
+    },
+    {
+      "name": "answer",
+      "title": "Answer",
+      "description": "着信に出る",
+      "mode": "no-view",
+      "keywords": [
+        "kamatte"
+      ]
+    },
+    {
+      "name": "decline",
+      "title": "Decline",
+      "description": "着信を拒否する",
+      "mode": "no-view",
+      "keywords": [
+        "kamatte"
+      ]
+    },
+    {
+      "name": "cancel",
+      "title": "Cancel Call",
+      "description": "呼び出しを取り消す",
+      "mode": "no-view",
+      "keywords": [
+        "kamatte"
+      ]
+    },
+    {
+      "name": "hangup",
+      "title": "Hang Up",
+      "description": "通話を切る",
+      "mode": "no-view",
+      "keywords": [
+        "kamatte",
+        "hangup"
+      ]
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "2.7.3",
+    "@raycast/utils": "2.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.17",
+    "@types/react": "19.0.10",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "typecheck": "tsc --noEmit"
+  }
+}
