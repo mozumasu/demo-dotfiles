@@ -1,4 +1,4 @@
-{ browser, ... }:
+{ lib, browser, ... }:
 {
   homebrew = {
     enable = true;
@@ -18,10 +18,12 @@
       "docker" # colima は実行環境だけなので CLI を別に入れる
       "sheldon"
     ];
-    casks = [
+    # robusta では browser.cask も vivaldi なので重複を除く
+    casks = lib.unique [
       "homerow"
       "aerospace" # タイル型ウィンドウマネージャ。設定は ~/.config/aerospace/aerospace.toml (Neovim と同じく mkOutOfStoreSymlink でリンク)
       browser.cask
+      "vivaldi" # 全ホストに入れる (https://vivaldi.com/ja/)
       "wezterm"
       "raycast"
       "slack"
