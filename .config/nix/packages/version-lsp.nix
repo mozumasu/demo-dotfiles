@@ -2,6 +2,7 @@
   lib,
   rustPlatform,
   fetchFromGitHub,
+  sqlite,
 }:
 
 rustPlatform.buildRustPackage rec {
@@ -16,6 +17,9 @@ rustPlatform.buildRustPackage rec {
   };
 
   cargoHash = "sha256-v1aVcuKKzV3WPXOHHz74WaeAIvz3ADPuvpVkeHXOKkc=";
+
+  # rusqlite がシステムの libsqlite3 にリンクする。新しい nixpkgs の darwin SDK では見つからないので明示する
+  buildInputs = [ sqlite ];
 
   # Tests fetch versions from package registries, which doesn't work in Nix sandbox
   doCheck = false;
