@@ -26,7 +26,7 @@ macOS の設定を nix-darwin と home-manager で管理する。
    git clone https://github.com/mozumasu/demo-dotfiles ~/dotfiles
    ```
 4. 非公開設定 (nix-secrets と kamatte) を取得・復号できるようにする
-   - SSH 鍵を作り、GitHub に Authentication key と Signing key の両方として登録する。nix-secrets と kamatte は private リポジトリなので ssh で取得し、Signing key はコミットの署名に使う (git.nix)。gh はまだ入っていないので nix shell で使う
+   - SSH 鍵を作り、GitHub に Authentication key と Signing key の両方として登録する。nix-secrets と kamatte は private リポジトリなので ssh で取得し、Signing key はコミットの署名に使う (git.nix)。gh はまだ入っていないので nix shell で使う。鍵は 5 の反映で root から使うので、ssh-agent に入れておく
 
      ```sh
      ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
@@ -36,6 +36,7 @@ macOS の設定を nix-darwin と home-manager で管理する。
        gh ssh-key add ~/.ssh/id_ed25519.pub --title "<設定名>" --type signing
      '
      ssh -T git@github.com
+     ssh-add ~/.ssh/id_ed25519
      ```
 
    - sops の age 鍵を、今使っている Mac の `~/.config/sops/age/keys.txt` から AirDrop で送り、同じ場所に置く。鍵は暗号化されずに入っているので、Slack やクラウドストレージは使わない。新しく作ると、nix-secrets を暗号化し直し、kamatte の `age_recipients` も書き換えて deploy し直してもらう必要がある
@@ -52,8 +53,12 @@ macOS の設定を nix-darwin と home-manager で管理する。
      ```
 5. 反映する
 
+   sudo で動く nix は root の `~/.ssh` を使うので、そのままでは nix-secrets と kamatte を取得できない。4 で ssh-agent に入れた鍵とユーザーの known_hosts を使わせる
+
    ```sh
-   sudo nix run \
+   sudo --preserve-env=SSH_AUTH_SOCK \
+     GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
+     nix run \
      --extra-experimental-features nix-command \
      --extra-experimental-features flakes \
      nix-darwin -- switch --flake "$HOME/dotfiles/.config/nix#<設定名>"
