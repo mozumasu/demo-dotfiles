@@ -4,7 +4,7 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "ブラウザと WezTerm では macSKK 使用中の Control+J を F19 に置き換える (Web アプリのショートカットに吸われたり、WezTerm が改行として送ったりするため。macSKK 側で F19 をひらがな/確定に割り当てている)",
+                        "description": "ブラウザと WezTerm では macSKK 使用中の Control+J を F19 に置き換える (Web アプリのショートカットに吸われたり、WezTerm が改行として送ったりするため。macSKK 側で F19 をひらがな/確定に割り当てている)。入力ソースが裏で ABC に変わったのに Karabiner が macSKK のままだと思っていると F19 が ABC に捨てられるので、先に macSKK のひらがなを選ぶ (macSKK は選び直されてもモードを変えるだけで、変換中の文字は残る)",
                         "manipulators": [
                             {
                                 "conditions": [
@@ -21,7 +21,10 @@
                                     "key_code": "j",
                                     "modifiers": { "mandatory": ["control"], "optional": ["any"] }
                                 },
-                                "to": [{ "key_code": "f19" }],
+                                "to": [
+                                    { "select_input_source": { "input_source_id": "^net\\.mtgto\\.inputmethod\\.macSKK\\.hiragana$" } },
+                                    { "key_code": "f19" }
+                                ],
                                 "type": "basic"
                             }
                         ]
