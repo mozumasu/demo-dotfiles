@@ -23,7 +23,6 @@
       cleanup = "none";
     };
     taps = [
-      "mtgto/macskk"
       "ardia-browser/tap"
     ];
     brews = [
