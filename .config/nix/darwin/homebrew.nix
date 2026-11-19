@@ -1,13 +1,26 @@
-{ lib, browser, ... }:
 {
+  config,
+  lib,
+  browser,
+  ...
+}:
+{
+  # サードパーティ tap の cask は brew trust が要る。brew bundle と同じく sudo --set-home でユーザーとして
+  # 実行し、~/.homebrew/trust.json に記録する。nix-homebrew の brew の用意 (mkBefore) と brew bundle の間で動かす
+  system.activationScripts.homebrew.text = lib.mkOrder 750 ''
+    if [ -f "${config.homebrew.prefix}/bin/brew" ]; then
+      sudo --user=${lib.escapeShellArg config.homebrew.user} --set-home \
+        "${config.homebrew.prefix}/bin/brew" trust --tap ${
+          lib.escapeShellArgs (map (t: t.name) config.homebrew.taps)
+        } >/dev/null
+    fi
+  '';
+
   homebrew = {
     enable = true;
     onActivation = {
       # Brewfile 外のパッケージを消さない
       cleanup = "none";
-      # サードパーティ tap の cask は brew trust が必要だが、activation は sudo 経由の隔離環境で動き
-      # ユーザーの trust 情報を参照できない ("untrusted tap" で失敗する) ため無効化
-      extraEnv.HOMEBREW_NO_REQUIRE_TAP_TRUST = "1";
     };
     taps = [
       "mtgto/macskk"
