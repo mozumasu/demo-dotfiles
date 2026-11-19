@@ -139,8 +139,8 @@
       darwinConfigurations.robusta = mkDarwin {
         hostName = "robusta";
         browser = {
-          cask = "vivaldi";
-          appId = "com.vivaldi.Vivaldi";
+          cask = "ardia-browser/tap/ardia";
+          appId = "com.ardia.browser";
         };
       };
     };

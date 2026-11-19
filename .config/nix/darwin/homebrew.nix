@@ -18,11 +18,10 @@
       "docker" # colima は実行環境だけなので CLI を別に入れる
       "sheldon"
     ];
-    # robusta では browser.cask も vivaldi なので重複を除く
+    # robusta では browser.cask も ardia なので重複を除く
     casks = lib.unique [
       "homerow"
       browser.cask
-      "vivaldi" # 全ホストに入れる (https://vivaldi.com/ja/)
       "wezterm"
       "raycast"
       "slack"
