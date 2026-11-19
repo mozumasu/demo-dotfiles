@@ -166,6 +166,10 @@
   # nb は ~/.nbrc 固定で読むのでホーム直下にリンクする
   home.file.".nbrc".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/nb/nbrc";
+  # zsh は ZDOTDIR がないと ~/.zshrc を読むので、~/.zshenv で ~/.config/zsh を指す
+  home.file.".zshenv".text = ''
+    export ZDOTDIR="$HOME/.config/zsh"
+  '';
   # ZDOTDIR (~/.config/zsh) には .zcompdump などのキャッシュも置かれるのでファイル単位でリンクする
   xdg.configFile."zsh/.zshrc".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/.config/zsh/.zshrc";
