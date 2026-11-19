@@ -1,21 +1,6 @@
+{ lib, browser, ... }:
 {
-  config,
-  lib,
-  browser,
-  ...
-}:
-{
-  # サードパーティ tap の cask は brew trust が要る。brew bundle と同じく sudo --set-home でユーザーとして
-  # 実行し、~/.homebrew/trust.json に記録する。nix-homebrew の brew の用意 (mkBefore) と brew bundle の間で動かす
-  system.activationScripts.homebrew.text = lib.mkOrder 750 ''
-    if [ -f "${config.homebrew.prefix}/bin/brew" ]; then
-      sudo --user=${lib.escapeShellArg config.homebrew.user} --set-home \
-        "${config.homebrew.prefix}/bin/brew" trust --tap ${
-          lib.escapeShellArgs (map (t: t.name) config.homebrew.taps)
-        } >/dev/null
-    fi
-  '';
-
+  # サードパーティ tap の cask の brew trust は、nix-darwin が Brewfile の各項目に付ける trusted: true で済む
   homebrew = {
     enable = true;
     onActivation = {
