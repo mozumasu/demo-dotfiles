@@ -76,3 +76,10 @@ macOS の設定を nix-darwin と home-manager で管理する。
      ```
 
    - AWS VPN Client を操作するスクリプト (aws-vpn-connect.sh など) を使うには、システム設定 → プライバシーとセキュリティ → アクセシビリティで Raycast を許可する
+
+7. nb のノートを clone する。nb は `NB_DIR` (`~/src/github.com/mozumasu/nb`) の下のフォルダをノートブックとして扱い、既定のノートブックは `home` なので、`home` という名前で clone する
+
+   ```sh
+   mkdir -p ~/src/github.com/mozumasu/nb
+   git clone https://github.com/mozumasu/nb-home ~/src/github.com/mozumasu/nb/home
+   ```
