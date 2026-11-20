@@ -66,3 +66,13 @@ macOS の設定を nix-darwin と home-manager で管理する。
 
    設定名は `flake.nix` の `darwinConfigurations` にある Mac の名前 (arabica / robusta)。1 回目の反映でホスト名が設定名に変わるので、
    2 回目以降は `sudo darwin-rebuild switch --flake ~/dotfiles/.config/nix` で `#<設定名>` を省ける
+
+6. Raycast を設定する。Raycast 本体と `~/.config/raycast/scripts` のリンクは 5 の反映で入るが、Raycast への登録は手でする
+   - Script Commands は Raycast の Settings → Extensions → Script Commands → Add Directories で `~/.config/raycast/scripts` を登録する。1 回登録すれば、あとからフォルダに足したスクリプトも Raycast に出る
+   - `.config/raycast/extensions-src` の自作の拡張は次のスクリプトでまとめてビルドして Raycast に入れる。npm は入れていないので、スクリプトの中で nix shell を使う。拡張の名前を渡すと、その拡張だけを入れる
+
+     ```sh
+     ~/dotfiles/.config/raycast/install-extensions.sh
+     ```
+
+   - AWS VPN Client を操作するスクリプト (aws-vpn-connect.sh など) を使うには、システム設定 → プライバシーとセキュリティ → アクセシビリティで Raycast を許可する
