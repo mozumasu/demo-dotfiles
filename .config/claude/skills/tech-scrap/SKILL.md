@@ -2,19 +2,27 @@
 name: tech-scrap
 description: 現在のセッションの内容を匿名化した技術スクラップとして ~/src/github.com/mozumasu/nb/home に保存する
 disable-model-invocation: true
-context: fork
 allowed-tools: Read, Write, Edit, Glob, WebFetch, Bash(ls *)
 argument-hint: "[追加の指示]"
 ---
+
+このスキルの作業は自分では行わない。Agent ツールで `subagent_type: "fork"` のエージェントを 1 つ起動し、
+下の「fork への依頼」をそのまま prompt として渡す (追加の指示も埋めた状態で渡す)。
+fork は会話の履歴を引き継ぐので、会話の要約を prompt に書き足す必要はない。
+fork の完了通知が来たら、返ってきた保存先のパスと 1 行の要約だけをユーザーに伝える。
+
+`context: fork` は使わない。この指定のサブエージェントは会話の履歴を受け取れないため。
+
+## fork への依頼
 
 このセッションでここまでに扱った内容を、技術スクラップとして `~/src/github.com/mozumasu/nb/home` に保存する。
 nb は自動コミットされるためコミット不要。
 
 追加の指示 (空なら無視): $ARGUMENTS
 
-執筆ルールは @${CLAUDE_SKILL_DIR}/scrap-rules.md に従う。
+執筆ルールは `${CLAUDE_SKILL_DIR}/scrap-rules.md` を Read して従う。
 
-## 手順
+### 手順
 
 1. トピックを表す簡潔なファイル名を決める (例: `crane.md`, `ecs-exec.md`)。
 2. `nb/home` に同じトピックのファイルがあるか Glob で探す。
