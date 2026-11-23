@@ -15,6 +15,7 @@
     ./git.nix
     ./granted.nix
     ./kamatte.nix
+    ./vpn.nix
   ];
   home.username = "mozumasu";
   home.homeDirectory = "/Users/mozumasu";

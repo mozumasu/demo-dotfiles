@@ -228,11 +228,11 @@
     "nix-secrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1791246294,
-        "narHash": "sha256-8IN0tL+m3AeQl9Qgg9U6A9yoE6538rcIlNIbZMHTcus=",
+        "lastModified": 1795423281,
+        "narHash": "sha256-/4PwTlGQK23dEHQBdcAJ/AAaOTiwvmpsmXJiWIqYSKk=",
         "ref": "refs/heads/main",
-        "rev": "80afee5e7125cd09d2e980cdec80698ad66791b6",
-        "revCount": 1,
+        "rev": "3da9112de6dbe29b55277ababc7ed2f9323ed135",
+        "revCount": 2,
         "type": "git",
         "url": "ssh://git@github.com/mozumasu/nix-secrets.git"
       },
