@@ -187,7 +187,11 @@ in
 
   # skills/synced と共存させるため skills ディレクトリ全体ではなくスキル単位でリンクする
   # .config/claude/skills にディレクトリを置けば自動でリンクされる
-  home.packages = [ claudeSettingsPull ];
+  home.packages = [
+    claudeSettingsPull
+    # ardia-playwright プラグインの MCP サーバー (plugins/ardia-playwright/.mcp.json)
+    pkgs.playwright-mcp
+  ];
 
   home.file =
     skillLinks ".claude"
