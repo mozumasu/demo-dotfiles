@@ -35,6 +35,7 @@
       # Cmd+Tab の置き換え。ウィンドウのないアプリ (Finder など) を一覧から外せる
       "alt-tab"
       "aws-vpn-client"
+      "google-chrome"
       "ardia-browser/tap/ardia" # Arc 風のサイドバーを持つ Chromium ブラウザ (https://github.com/ardia-browser/ardia)
     ];
     # Mac App Store 限定のアプリ。mas で入れるので App Store にサインインしておく必要がある
