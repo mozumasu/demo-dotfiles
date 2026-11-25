@@ -36,6 +36,7 @@
       "alt-tab"
       "aws-vpn-client"
       "google-chrome"
+      "1password-cli" # op コマンド
       "ardia-browser/tap/ardia" # Arc 風のサイドバーを持つ Chromium ブラウザ (https://github.com/ardia-browser/ardia)
     ];
     # Mac App Store 限定のアプリ。mas で入れるので App Store にサインインしておく必要がある
