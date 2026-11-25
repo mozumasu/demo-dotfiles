@@ -19,7 +19,7 @@
     casks = lib.unique [
       "homerow"
       browser.cask
-      "wezterm"
+      "wezterm@nightly"
       "raycast"
       "slack"
       "discord"
