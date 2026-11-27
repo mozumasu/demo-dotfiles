@@ -12,6 +12,7 @@ description: 週1回の定点観測会（監視アラートとエラーの振り
 組織やプロダクトに固有の値は、この skill には書かず `~/.config/teiten-kansoku/config.md` に置く。最初にこのファイルを読む。ファイルがなければ、下の項目を利用者に聞いてから作る。
 
 - 監視サービスとアカウント ID、データの取り方（MCP、CLI、API など）
+- 資料に貼るグラフの NRQL（New Relic を使う場合。なければ下の既定のクエリを使う）
 - 表のリンク先にするダッシュボード
 - 調べるリポジトリ（アプリ、インフラ、マニフェスト）
 - 環境の名前（本番、検証など）
@@ -22,10 +23,51 @@ description: 週1回の定点観測会（監視アラートとエラーの振り
 
 1. **前回の議事録を読む**: 宿題と「対応を決めたいこと」を拾う。議事録を読めないときは、利用者に貼ってもらう。
 2. **宿題の結果を調べる**: 項目ごとに、関係する Issue や PR の状態と、アラートの件数の変化を確かめる。
-3. **アラートを集計する**: 直近7日と、その前の7日を集計する。期間は実行時刻から数え、資料には JST で書く。
+3. **アラートを集計する**: 直近7日と、その前の7日を集計する。期間は実行時刻から数え、資料には JST で書く。New Relic なら下の「New Relic からの集計とグラフ」に従う。
 4. **注目アラートを選ぶ**: 今週初めて鳴った条件と、先週の2倍以上に増えた条件を選ぶ。どちらもなければ、件数が最も多い条件を選ぶ。
 5. **原因を調べる**: 注目アラートごとに、ログ、トレース、条件の定義、リポジトリのコードとマニフェストを見る。
-6. **下書きを出す**: 下の型で Markdown を出す。利用者が頼んだときだけ議事録に書き込む。
+6. **グラフを作る**: New Relic なら、アラート件数の推移と、注目アラートごとの推移を PNG にする。
+7. **下書きを出す**: 下の型で Markdown を出す。利用者が頼んだときだけ議事録に書き込む。
+
+## New Relic からの集計とグラフ
+
+数値は `newrelic nrql query` で取り、表に書く。グラフは同梱の `scripts/nr-chart.sh` で PNG にする。どちらも CLI の profile（User API key）が要る。`newrelic profile list` で profile がなければ、利用者に `newrelic profile add` での登録を頼み、自分では API key を扱わない。
+
+```bash
+# 数値: 条件ごとの incident 件数（直近7日）
+newrelic nrql query --accountId <ID> --query \
+  "SELECT count(*) FROM NrAiIncident WHERE event = 'open' FACET conditionName SINCE 7 days ago LIMIT MAX"
+
+# グラフ: アラート件数の推移（直近14日、先週と比べられる）
+scripts/nr-chart.sh <ID> LINE <作業ディレクトリ>/incidents.png \
+  "SELECT count(*) FROM NrAiIncident WHERE event = 'open' TIMESERIES 1 day SINCE 14 days ago"
+```
+
+- 先週の件数は `SINCE 14 days ago UNTIL 7 days ago` で取る。`COMPARE WITH 1 week ago` でもよい。
+- 注目アラートのグラフは `WHERE conditionName = '<条件名>'` を足し、`TIMESERIES 1 hour` で発生時刻の偏りが見えるようにする。
+- 設定ファイルに NRQL か、NRQL を取るダッシュボードのウィジェットが書いてあれば、そちらを優先する。
+- PNG は scratchpad などの作業ディレクトリに保存する。`staticChartUrl` は期限付きなので、URL を資料に直接貼らない。
+- 議事録に書き込むときは、PNG を Notion MCP の `notion-create-file-upload` でアップロードし、画像ブロックとして該当する節に置く。各グラフの下に、使った NRQL と New Relic の query builder へのリンクを添える。
+- 書き込まないときは、PNG のパスと貼る位置を下書きに書いておく。
+
+### 次に見る場所のリンク
+
+注目アラートごとに、読み手が次に開くページへのリンクを付ける。NrAiIncident から条件ごとに取る。
+
+```bash
+newrelic nrql query --accountId <ID> --query \
+  "SELECT latest(incidentLink), latest(entity.guid), latest(nrqlQuery) FROM NrAiIncident WHERE event = 'open' AND conditionName = '<条件名>' SINCE 7 days ago"
+```
+
+- 最新の incident: `incidentLink`
+- 条件の定義: NerdGraph の `entitySearch(query: "type = 'CONDITION' AND name = '<条件名>'")` の `permalink`
+- 対象のエンティティ: `entity.guid` が空でなければ `https://one.newrelic.com/redirect/entity/<entity.guid>`
+- ダッシュボード: 設定ファイルの対応表
+- 条件の NRQL: `nrqlQuery` をコードブロックで載せる。query builder に貼れば中身を見られる
+
+リンクごとに、そこで何を見るかを1文で添える。
+
+貼る前に、リンク先のエンティティがあるかを NerdGraph の `actor { entity(guid: "<GUID>") { name } }` で確かめる。`entity` が null なら、そのダッシュボードは消えているので貼らない。前回の議事録のリンクをそのまま写さず、設定ファイルの GUID を使う。
 
 ## 資料の型
 
@@ -38,6 +80,8 @@ description: 週1回の定点観測会（監視アラートとエラーの振り
 
 ## 1. 今週のアラート一覧（MM-DD 〜 MM-DD）
 直近7日の incident は N件 / N条件（先週 N件 / N条件）。有効な条件は N本あるので、鳴ったのは N本（N%）。（増減の主な理由を1文）
+
+（グラフ: 直近14日のアラート件数の推移）
 
 | 条件 | incident | 先週 | 平均継続 | 発生時刻（JST） | 環境 | ダッシュボード |
 |---|---|---|---|---|---|---|
@@ -55,6 +99,14 @@ description: 週1回の定点観測会（監視アラートとエラーの振り
 |---|---|---|---|---|
 
 ### （条件名）（N件）
+（グラフ: この条件の1時間ごとの件数）
+
+次に見る場所:
+- [最新の incident](incidentLink): （何を見るか）
+- [条件の定義](permalink): （何を見るか）
+- [対象のエンティティ](URL): （何を見るか）
+- [ダッシュボード](URL): （何を見るか）
+
 - 結論: （1文）
 - 証拠: （時刻、件数、ログの中身）
 - 仕組み: （なぜ鳴るか。ファイルと行番号）
