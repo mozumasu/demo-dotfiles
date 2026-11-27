@@ -2,7 +2,7 @@
 # playwright-mcp の拡張機能モードは、接続の承認ページ (chrome-extension://.../connect.html) を
 # ブラウザの実行ファイルに引数で渡して開く。Ardia は起動済みのウィンドウへ渡すときにこの URL を
 # 捨てるので、最後の引数だけを open -a で Ardia に渡す。
-state="${XDG_STATE_HOME:-$HOME/.local/state}/ardia-playwright"
+state="${XDG_STATE_HOME:-$HOME/.local/state}/browser-playwright"
 mkdir -p "$state"
 printf '%s %s\n' "$(date '+%F %T')" "$*" >> "$state/ardia-open.log"
 for a in "$@"; do url="$a"; done

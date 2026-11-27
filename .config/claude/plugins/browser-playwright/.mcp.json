@@ -1,0 +1,16 @@
+{
+  "playwright-chrome": {
+    "command": "playwright-mcp",
+    "args": [
+      "--extension",
+      "--executable-path",
+      "${CLAUDE_PLUGIN_ROOT}/bin/chrome-open",
+      "--output-dir",
+      "${HOME}/.cache/playwright-mcp"
+    ],
+    "env": {
+      "PLAYWRIGHT_MCP_USER_DATA_DIR": "${HOME}/Library/Application Support/Google/Chrome",
+      "CHROME_PROFILE_DIRECTORY": "Default"
+    }
+  }
+}

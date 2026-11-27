@@ -9,7 +9,7 @@
     ]
   },
   "env": {
-    "CLAUDE_CODE_PLUGIN_DIRS": "~/dotfiles/.config/claude/plugins/slidev-preview:~/dotfiles/.config/claude/plugins/ardia-playwright"
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/dotfiles/.config/claude/plugins/slidev-preview:~/dotfiles/.config/claude/plugins/browser-playwright"
   },
   "extraKnownMarketplaces": {
     "claude-community": {

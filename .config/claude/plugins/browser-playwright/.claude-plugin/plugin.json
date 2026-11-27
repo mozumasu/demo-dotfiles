@@ -1,0 +1,5 @@
+{
+  "name": "browser-playwright",
+  "version": "0.1.0",
+  "description": "Playwright MCP の拡張機能モードで、ログイン済みの Chrome（と Ardia）を操作する"
+}

@@ -1,5 +1,0 @@
-{
-  "name": "ardia-playwright",
-  "version": "0.1.0",
-  "description": "Playwright MCP の拡張機能モードでログイン済みの Ardia を操作する"
-}

@@ -1,0 +1,20 @@
+#!/bin/sh
+# ardia-open の Chrome 版。承認ページ (chrome-extension://.../connect.html) の URL を、
+# playwright が指定したプロファイル (--profile-directory) で Chrome に開かせる。
+# open -a だとプロファイルの指定が落ち、拡張機能の入っていないプロファイルに開くことがあるため、
+# Chrome の実行ファイルを直接呼ぶ。起動済みなら、その Chrome の指定プロファイルのウィンドウに開く。
+# 拡張機能を複数のプロファイルに入れているときは、CHROME_PROFILE_DIRECTORY で開くプロファイルを固定する。
+state="${XDG_STATE_HOME:-$HOME/.local/state}/browser-playwright"
+mkdir -p "$state"
+printf '%s %s\n' "$(date '+%F %T')" "$*" >> "$state/chrome-open.log"
+profile=""
+for a in "$@"; do
+  case "$a" in
+    --profile-directory=*) profile="$a" ;;
+  esac
+  url="$a"
+done
+if [ -n "${CHROME_PROFILE_DIRECTORY:-}" ]; then
+  profile="--profile-directory=$CHROME_PROFILE_DIRECTORY"
+fi
+exec "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ${profile:+"$profile"} "$url" >/dev/null 2>&1

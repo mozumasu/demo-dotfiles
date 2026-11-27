@@ -189,7 +189,7 @@ in
   # .config/claude/skills にディレクトリを置けば自動でリンクされる
   home.packages = [
     claudeSettingsPull
-    # ardia-playwright プラグインの MCP サーバー (plugins/ardia-playwright/.mcp.json)
+    # browser-playwright プラグインの MCP サーバー (plugins/browser-playwright/.mcp.json)
     pkgs.playwright-mcp
   ];
 
